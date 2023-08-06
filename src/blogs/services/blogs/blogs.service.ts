@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { CreateBlogDto } from '../../dtos/createBlog.dto';
-import { Blog } from '../../models/blogs';
+import { Blog } from '../../schema/blogs';
 import { UpdateBlogDto } from '../../dtos/updateBlog.dto';
 import { PaginationDto } from '../../dtos/pagination.dto';
 
@@ -36,7 +36,8 @@ export class BlogsService {
     };
 
     this.blogs.push(blog);
-    return;
+
+    return blog;
   }
 
   public fetchBlogs(pagination: PaginationDto) {
@@ -55,7 +56,8 @@ export class BlogsService {
   public updateBlogById(id: string, blogData: UpdateBlogDto) {
     const blog = this.fetchBlogById(id);
     const blogIndex = this.blogs.findIndex((blog) => blog.id === id);
-    this.blogs[blogIndex] = { ...blog, ...blogData };
-    return;
+    const updatedBlog: Blog = { ...blog, ...blogData };
+    this.blogs[blogIndex] = updatedBlog;
+    return updatedBlog;
   }
 }
