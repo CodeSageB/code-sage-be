@@ -1,8 +1,22 @@
 import { Module } from '@nestjs/common';
 import { BlogsModule } from './blogs/blogs.module';
+import { TypeOrmModule } from '@nestjs/typeorm';
 
 @Module({
-  imports: [BlogsModule],
+  imports: [
+    TypeOrmModule.forRoot({
+      type: 'postgres',
+      host: 'localhost',
+      port: 5432,
+      password: 'noveHeslo1',
+      username: 'code-sage-admin',
+      entities: [],
+      database: 'codeSage',
+      synchronize: true,
+      logging: true
+    }),
+    BlogsModule
+  ],
   controllers: [],
   providers: []
 })
