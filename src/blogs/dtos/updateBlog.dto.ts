@@ -7,8 +7,8 @@ export class UpdateBlogDto {
   @IsString()
   title: string;
 
-  @IsOptional()
   @MinLength(1)
-  @IsString({ message: 'Ty seš ale debil' })
+  @IsOptional()
+  @IsString()
   content: string;
 }

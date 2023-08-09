@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { BlogsModule } from './blogs/blogs.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { BlogEntity } from './typeorm/entities/Blog.entity';
 
 @Module({
   imports: [
@@ -10,7 +11,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
       port: 5432,
       password: 'noveHeslo1',
       username: 'code-sage-admin',
-      entities: [],
+      entities: [BlogEntity],
       database: 'codeSage',
       synchronize: true,
       logging: true
