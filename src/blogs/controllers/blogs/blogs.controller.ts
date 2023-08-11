@@ -28,8 +28,14 @@ export class BlogsController {
     type: BlogSuccessDto
   })
   @Post()
-  createBlog(@Body() createBlogDto: CreateBlogDto) {
-    return this.blogService.createBlog(createBlogDto);
+  async createBlog(@Body() createBlogDto: CreateBlogDto) {
+    const blog = await this.blogService.createBlog(createBlogDto);
+
+    if (!blog) {
+      throw new HttpException('Blog not created', HttpStatus.BAD_REQUEST);
+    }
+
+    return this.blogConverter(blog);
   }
 
   @ApiResponse({
@@ -37,8 +43,10 @@ export class BlogsController {
     type: [BlogSuccessDto]
   })
   @Post('all')
-  getBlogs(@Body() paginationDto: PaginationDto) {
-    return this.blogService.fetchBlogs(paginationDto);
+  async getBlogs(@Body() paginationDto: PaginationDto) {
+    const blogs = await this.blogService.fetchBlogs(paginationDto);
+
+    return blogs.map((blog) => this.blogConverter(blog));
   }
 
   @ApiResponse({
@@ -48,6 +56,7 @@ export class BlogsController {
   @Get(':id')
   async getBlogById(@Param('id', ParseUUIDPipe) id: string) {
     const blog = await this.blogService.fetchBlogById(id);
+
     if (!blog) {
       throw new HttpException('Blog not found', HttpStatus.NOT_FOUND);
     }
@@ -60,11 +69,14 @@ export class BlogsController {
     type: BlogSuccessDto
   })
   @Put(':id')
-  updateBlogById(
+  async updateBlogById(
     @Param('id') id: string,
     @Body() updateBlogDto: UpdateBlogDto
   ) {
-    return this.blogService.updateBlogById(id, updateBlogDto);
+    console.log(id);
+    const blog = await this.blogService.updateBlogById(id, updateBlogDto);
+    console.log(blog);
+    return blog;
   }
 
   private blogConverter(blog: Blog): BlogDto {

@@ -50,19 +50,15 @@ export class BlogsService {
     return this.blogRepository.save(blog);
   }
 
-  public fetchBlogs(pagination: PaginationDto) {
-    const { page, limit } = pagination;
-
-    const startIndex = (page - 1) * limit;
-    const endIndex = Math.min(startIndex + limit, this.blogs.length);
-
-    return this.blogs.slice(startIndex, endIndex);
+  public fetchBlogs(paginationDto: PaginationDto) {
+    return this.blogRepository.find({ take: paginationDto.limit });
   }
 
   public fetchBlogById(uuid: string) {
     return this.blogRepository.findOneBy({ externalId: uuid });
   }
 
+  // TODO make it work
   public updateBlogById(uuid: string, blogData: UpdateBlogDto) {
     return this.blogRepository.update(uuid, blogData);
   }
