@@ -54,12 +54,22 @@ export class BlogsService {
     return this.blogRepository.find({ take: paginationDto.limit });
   }
 
-  public fetchBlogById(uuid: string) {
+  public fetchBlog(uuid: string) {
     return this.blogRepository.findOneBy({ externalId: uuid });
   }
 
-  // TODO make it work
-  public updateBlogById(uuid: string, blogData: UpdateBlogDto) {
-    return this.blogRepository.update(uuid, blogData);
+  public async updateBlog(uuid: string, blogData: UpdateBlogDto) {
+    await this.blogRepository
+      .createQueryBuilder()
+      .update()
+      .set({ ...blogData })
+      .where('externalId = :uuid', { uuid })
+      .execute();
+
+    return this.fetchBlog(uuid);
+  }
+
+  public deleteBlog(uuid: string) {
+    return this.blogRepository.delete({ externalId: uuid });
   }
 }

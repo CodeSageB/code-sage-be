@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpException,
   HttpStatus,
@@ -13,8 +14,6 @@ import { CreateBlogDto } from '../../dtos/createBlog.dto';
 import { BlogsService } from '../../services/blogs/blogs.service';
 import { UpdateBlogDto } from '../../dtos/updateBlog.dto';
 import { PaginationDto } from '../../dtos/pagination.dto';
-import { BlogSuccessDto } from '../../dtos/swagger/blogSuccess.dto';
-import { ApiResponse } from '@nestjs/swagger';
 import { Blog } from '../../schema/blogs';
 import { BlogDto } from '../../dtos/blog.dto';
 
@@ -22,11 +21,6 @@ import { BlogDto } from '../../dtos/blog.dto';
 export class BlogsController {
   constructor(private blogService: BlogsService) {}
 
-  @ApiResponse({
-    status: 201,
-    description: 'The blog has been successfully created.',
-    type: BlogSuccessDto
-  })
   @Post()
   async createBlog(@Body() createBlogDto: CreateBlogDto) {
     const blog = await this.blogService.createBlog(createBlogDto);
@@ -38,10 +32,6 @@ export class BlogsController {
     return this.blogConverter(blog);
   }
 
-  @ApiResponse({
-    status: 201,
-    type: [BlogSuccessDto]
-  })
   @Post('all')
   async getBlogs(@Body() paginationDto: PaginationDto) {
     const blogs = await this.blogService.fetchBlogs(paginationDto);
@@ -49,13 +39,9 @@ export class BlogsController {
     return blogs.map((blog) => this.blogConverter(blog));
   }
 
-  @ApiResponse({
-    status: 200,
-    type: BlogSuccessDto
-  })
   @Get(':id')
-  async getBlogById(@Param('id', ParseUUIDPipe) id: string) {
-    const blog = await this.blogService.fetchBlogById(id);
+  async getBlog(@Param('id', ParseUUIDPipe) id: string) {
+    const blog = await this.blogService.fetchBlog(id);
 
     if (!blog) {
       throw new HttpException('Blog not found', HttpStatus.NOT_FOUND);
@@ -64,16 +50,27 @@ export class BlogsController {
     return this.blogConverter(blog);
   }
 
-  @ApiResponse({
-    status: 200,
-    type: BlogSuccessDto
-  })
   @Put(':id')
-  async updateBlogById(
-    @Param('id') id: string,
+  async updateBlog(
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() updateBlogDto: UpdateBlogDto
   ) {
-    return await this.blogService.updateBlogById(id, updateBlogDto);
+    const blog = await this.blogService.updateBlog(id, updateBlogDto);
+
+    if (!blog) {
+      throw new HttpException('Blog not found', HttpStatus.NOT_FOUND);
+    }
+
+    return this.blogConverter(blog);
+  }
+
+  @Delete(':id')
+  async deleteBlog(@Param('id', ParseUUIDPipe) id: string) {
+    const res = await this.blogService.deleteBlog(id);
+
+    if (res.affected === 0) {
+      throw new HttpException('Blog not found', HttpStatus.NOT_FOUND);
+    }
   }
 
   private blogConverter(blog: Blog): BlogDto {
