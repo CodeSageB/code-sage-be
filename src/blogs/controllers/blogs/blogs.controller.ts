@@ -73,10 +73,7 @@ export class BlogsController {
     @Param('id') id: string,
     @Body() updateBlogDto: UpdateBlogDto
   ) {
-    console.log(id);
-    const blog = await this.blogService.updateBlogById(id, updateBlogDto);
-    console.log(blog);
-    return blog;
+    return await this.blogService.updateBlogById(id, updateBlogDto);
   }
 
   private blogConverter(blog: Blog): BlogDto {
