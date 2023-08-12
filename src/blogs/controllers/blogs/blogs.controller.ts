@@ -3,8 +3,6 @@ import {
   Controller,
   Delete,
   Get,
-  HttpException,
-  HttpStatus,
   Param,
   ParseUUIDPipe,
   Post,
@@ -14,29 +12,31 @@ import { CreateBlogDto } from '../../dtos/createBlog.dto';
 import { BlogsService } from '../../services/blogs/blogs.service';
 import { UpdateBlogDto } from '../../dtos/updateBlog.dto';
 import { PaginationDto } from '../../dtos/pagination.dto';
-import { Blog } from '../../schema/blogs';
-import { BlogDto } from '../../dtos/blog.dto';
+import { HttpExceptions } from '../../../tools/http-exceptions';
+import { Mappers } from '../../../tools/mappers';
 
 @Controller('blogs')
 export class BlogsController {
   constructor(private blogService: BlogsService) {}
 
+  // TODO logger
+  //TODO postgres server v dokeru
   @Post()
   async createBlog(@Body() createBlogDto: CreateBlogDto) {
     const blog = await this.blogService.createBlog(createBlogDto);
 
     if (!blog) {
-      throw new HttpException('Blog not created', HttpStatus.BAD_REQUEST);
+      throw HttpExceptions.badRequest();
     }
 
-    return this.blogConverter(blog);
+    return Mappers.blogEntityToBlogDto(blog);
   }
 
   @Post('all')
   async getBlogs(@Body() paginationDto: PaginationDto) {
     const blogs = await this.blogService.fetchBlogs(paginationDto);
 
-    return blogs.map((blog) => this.blogConverter(blog));
+    return blogs.map((blog) => Mappers.blogEntityToBlogDto(blog));
   }
 
   @Get(':id')
@@ -44,10 +44,10 @@ export class BlogsController {
     const blog = await this.blogService.fetchBlog(id);
 
     if (!blog) {
-      throw new HttpException('Blog not found', HttpStatus.NOT_FOUND);
+      throw HttpExceptions.notFound();
     }
 
-    return this.blogConverter(blog);
+    return Mappers.blogEntityToBlogDto(blog);
   }
 
   @Put(':id')
@@ -58,27 +58,18 @@ export class BlogsController {
     const blog = await this.blogService.updateBlog(id, updateBlogDto);
 
     if (!blog) {
-      throw new HttpException('Blog not found', HttpStatus.NOT_FOUND);
+      throw HttpExceptions.notFound();
     }
 
-    return this.blogConverter(blog);
+    return Mappers.blogEntityToBlogDto(blog);
   }
 
   @Delete(':id')
   async deleteBlog(@Param('id', ParseUUIDPipe) id: string) {
     const res = await this.blogService.deleteBlog(id);
 
-    if (res.affected === 0) {
-      throw new HttpException('Blog not found', HttpStatus.NOT_FOUND);
+    if (!res.affected) {
+      throw HttpExceptions.notFound();
     }
-  }
-
-  private blogConverter(blog: Blog): BlogDto {
-    return {
-      id: blog.externalId,
-      title: blog.title,
-      content: blog.content,
-      created: blog.created
-    };
   }
 }
