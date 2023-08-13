@@ -7,12 +7,12 @@ import { BlogEntity } from './typeorm/entities/Blog.entity';
   imports: [
     TypeOrmModule.forRoot({
       type: 'postgres',
-      host: 'localhost',
+      host: 'db',
       port: 5432,
-      password: 'noveHeslo1',
-      username: 'code-sage-admin',
+      database: 'postgres',
+      username: 'postgres',
+      password: 'postgres',
       entities: [BlogEntity],
-      database: 'codeSage',
       synchronize: true,
       logging: true
     }),
