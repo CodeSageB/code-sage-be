@@ -19,8 +19,7 @@ import { Mappers } from '../../mappers';
 export class BlogsController {
   constructor(private blogService: BlogsService) {}
 
-  // TODO logger
-  //TODO postgres server v dokeru
+  // TODO Global exception kde budou i logy
   @Post()
   async createBlog(@Body() createBlogDto: CreateBlogDto) {
     const blog = await this.blogService.createBlog(createBlogDto);
