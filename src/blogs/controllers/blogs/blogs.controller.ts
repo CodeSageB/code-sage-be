@@ -13,7 +13,7 @@ import { BlogsService } from '../../services/blogs/blogs.service';
 import { UpdateBlogDto } from '../../dtos/updateBlog.dto';
 import { PaginationDto } from '../../dtos/pagination.dto';
 import { HttpExceptions } from '../../../tools/http-exceptions';
-import { Mappers } from '../../../tools/mappers';
+import { Mappers } from '../../mappers';
 
 @Controller('blogs')
 export class BlogsController {

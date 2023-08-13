@@ -9,5 +9,5 @@ export class PaginationDto {
   @IsInt()
   @IsOptional()
   @Min(1)
-  limit = 10;
+  take = 10;
 }

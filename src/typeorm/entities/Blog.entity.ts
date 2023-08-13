@@ -16,10 +16,10 @@ export class BlogEntity {
   @Generated('uuid')
   externalId: string;
 
-  @Column()
+  @Column({ type: 'text' })
   title: string;
 
-  @Column()
+  @Column({ type: 'text' })
   content: string;
 
   @CreateDateColumn({ type: 'timestamptz' })
