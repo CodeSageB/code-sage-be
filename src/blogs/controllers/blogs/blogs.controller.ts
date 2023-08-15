@@ -1,8 +1,10 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
   Get,
+  NotFoundException,
   Param,
   ParseUUIDPipe,
   Post,
@@ -12,7 +14,6 @@ import { CreateBlogDto } from '../../dtos/createBlog.dto';
 import { BlogsService } from '../../services/blogs/blogs.service';
 import { UpdateBlogDto } from '../../dtos/updateBlog.dto';
 import { PaginationDto } from '../../dtos/pagination.dto';
-import { HttpExceptions } from '../../../tools/http-exceptions';
 import { Mappers } from '../../mappers';
 
 @Controller('blogs')
@@ -27,7 +28,7 @@ export class BlogsController {
     //TODO vytvorit separ exceptions
 
     if (!blog) {
-      throw HttpExceptions.badRequest();
+      throw new BadRequestException('Bad request');
     }
 
     return Mappers.blogEntityToBlogDto(blog);
@@ -45,7 +46,7 @@ export class BlogsController {
     const blog = await this.blogService.fetchBlog(id);
 
     if (!blog) {
-      throw HttpExceptions.notFound();
+      throw new NotFoundException('Blog not found');
     }
 
     return Mappers.blogEntityToBlogDto(blog);
@@ -59,7 +60,7 @@ export class BlogsController {
     const blog = await this.blogService.updateBlog(id, updateBlogDto);
 
     if (!blog) {
-      throw HttpExceptions.notFound();
+      throw new NotFoundException('Blog not found');
     }
 
     return Mappers.blogEntityToBlogDto(blog);
@@ -70,7 +71,7 @@ export class BlogsController {
     const res = await this.blogService.deleteBlog(id);
 
     if (!res.affected) {
-      throw HttpExceptions.notFound();
+      throw new NotFoundException('Blog not found');
     }
   }
 }
