@@ -25,8 +25,6 @@ export class BlogsController {
   async createBlog(@Body() createBlogDto: CreateBlogDto) {
     const blog = await this.blogService.createBlog(createBlogDto);
 
-    //TODO vytvorit separ exceptions
-
     if (!blog) {
       throw new BadRequestException('Bad request');
     }
