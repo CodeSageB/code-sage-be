@@ -6,12 +6,10 @@ import {
   HttpStatus,
   Logger
 } from '@nestjs/common';
+import * as process from 'process';
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
-  // TODO predelat do env variables
-  dev = true;
-
   constructor(private readonly logger: Logger) {}
 
   catch(exception: Error, host: ArgumentsHost): any {
@@ -48,6 +46,6 @@ export class AllExceptionsFilter implements ExceptionFilter {
     );
     response
       .status(statusCode)
-      .json(this.dev ? devErrorResponse : prodErrorResponse);
+      .json(process.env.IS_DEV ? devErrorResponse : prodErrorResponse);
   }
 }
