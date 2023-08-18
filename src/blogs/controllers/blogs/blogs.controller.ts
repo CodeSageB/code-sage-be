@@ -1,10 +1,12 @@
 import {
+  BadRequestException,
   Body,
   Controller,
+  Delete,
   Get,
-  HttpException,
-  HttpStatus,
+  NotFoundException,
   Param,
+  ParseUUIDPipe,
   Post,
   Put
 } from '@nestjs/common';
@@ -12,56 +14,62 @@ import { CreateBlogDto } from '../../dtos/createBlog.dto';
 import { BlogsService } from '../../services/blogs/blogs.service';
 import { UpdateBlogDto } from '../../dtos/updateBlog.dto';
 import { PaginationDto } from '../../dtos/pagination.dto';
-import { BlogSuccessDto } from '../../dtos/swagger/blogSuccess.dto';
-import { ApiResponse } from '@nestjs/swagger';
+import { Mappers } from '../../mappers';
 
 @Controller('blogs')
 export class BlogsController {
   constructor(private blogService: BlogsService) {}
 
-  @ApiResponse({
-    status: 201,
-    description: 'The blog has been successfully created.',
-    type: BlogSuccessDto
-  })
+  // TODO Intergacni testy
   @Post()
-  createBlog(@Body() createBlogDto: CreateBlogDto) {
-    return this.blogService.createBlog(createBlogDto);
-  }
-
-  @ApiResponse({
-    status: 201,
-    type: [BlogSuccessDto]
-  })
-  @Post('all')
-  getBlogs(@Body() paginationDto: PaginationDto) {
-    return this.blogService.fetchBlogs(paginationDto);
-  }
-
-  @ApiResponse({
-    status: 200,
-    type: BlogSuccessDto
-  })
-  @Get(':id')
-  getBlogById(@Param('id') id: string) {
-    const blog = this.blogService.fetchBlogById(id);
+  async createBlog(@Body() createBlogDto: CreateBlogDto) {
+    const blog = await this.blogService.createBlog(createBlogDto);
 
     if (!blog) {
-      throw new HttpException('Blog not found', HttpStatus.NOT_FOUND);
+      throw new BadRequestException('Bad request');
     }
 
-    return blog;
+    return Mappers.blogEntityToBlogDto(blog);
   }
 
-  @ApiResponse({
-    status: 200,
-    type: BlogSuccessDto
-  })
+  @Post('all')
+  async getBlogs(@Body() paginationDto: PaginationDto) {
+    const blogs = await this.blogService.fetchBlogs(paginationDto);
+
+    return blogs.map((blog) => Mappers.blogEntityToBlogDto(blog));
+  }
+
+  @Get(':id')
+  async getBlog(@Param('id', ParseUUIDPipe) id: string) {
+    const blog = await this.blogService.fetchBlog(id);
+
+    if (!blog) {
+      throw new NotFoundException('Blog not found');
+    }
+
+    return Mappers.blogEntityToBlogDto(blog);
+  }
+
   @Put(':id')
-  updateBlogById(
-    @Param('id') id: string,
+  async updateBlog(
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() updateBlogDto: UpdateBlogDto
   ) {
-    return this.blogService.updateBlogById(id, updateBlogDto);
+    const blog = await this.blogService.updateBlog(id, updateBlogDto);
+
+    if (!blog) {
+      throw new NotFoundException('Blog not found');
+    }
+
+    return Mappers.blogEntityToBlogDto(blog);
+  }
+
+  @Delete(':id')
+  async deleteBlog(@Param('id', ParseUUIDPipe) id: string) {
+    const res = await this.blogService.deleteBlog(id);
+
+    if (!res.affected) {
+      throw new NotFoundException('Blog not found');
+    }
   }
 }

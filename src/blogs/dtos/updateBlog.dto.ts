@@ -1,14 +1,14 @@
-import { IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
 
 export class UpdateBlogDto {
   @MaxLength(100)
-  @MinLength(1)
   @IsOptional()
+  @IsNotEmpty()
   @IsString()
   title: string;
 
   @IsOptional()
-  @MinLength(1)
-  @IsString({ message: 'Ty seš ale debil' })
+  @IsNotEmpty()
+  @IsString()
   content: string;
 }
