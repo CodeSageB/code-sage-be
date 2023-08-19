@@ -5,11 +5,16 @@ import { BlogEntity } from './typeorm/entities/Blog.entity';
 import { LoggerMiddleware } from './middleware/logger.middleware';
 import { ConfigModule } from '@nestjs/config';
 import * as process from 'process';
+import { configuration } from '../config/configuration';
+import { validationSchema } from '../config/validation';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
-      isGlobal: true
+      envFilePath: `${process.cwd()}/config/env/${process.env.NODE_ENV}.env`,
+      load: [configuration],
+      isGlobal: true,
+      validationSchema
     }),
     TypeOrmModule.forRoot({
       type: 'postgres',

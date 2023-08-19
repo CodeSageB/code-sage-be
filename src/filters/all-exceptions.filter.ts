@@ -7,6 +7,7 @@ import {
   Logger
 } from '@nestjs/common';
 import * as process from 'process';
+import { environmentTypes } from '../shared/enums/environment-types.enum';
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
@@ -46,6 +47,10 @@ export class AllExceptionsFilter implements ExceptionFilter {
     );
     response
       .status(statusCode)
-      .json(process.env.IS_DEV ? devErrorResponse : prodErrorResponse);
+      .json(
+        process.env.NODE_ENV === environmentTypes.DEVELOPMENT
+          ? devErrorResponse
+          : prodErrorResponse
+      );
   }
 }
