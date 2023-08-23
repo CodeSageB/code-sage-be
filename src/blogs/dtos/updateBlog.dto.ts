@@ -5,10 +5,10 @@ export class UpdateBlogDto {
   @IsOptional()
   @IsNotEmpty()
   @IsString()
-  title: string;
+  title?: string;
 
   @IsOptional()
   @IsNotEmpty()
   @IsString()
-  content: string;
+  content?: string;
 }

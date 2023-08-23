@@ -20,7 +20,6 @@ import { Mappers } from '../../mappers';
 export class BlogsController {
   constructor(private blogService: BlogsService) {}
 
-  // TODO Intergacni testy
   @Post()
   async createBlog(@Body() createBlogDto: CreateBlogDto) {
     const blog = await this.blogService.createBlog(createBlogDto);
