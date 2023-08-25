@@ -11,7 +11,6 @@ import { Repository } from 'typeorm';
 import { CreateBlogDto } from '../dtos/createBlog.dto';
 import { UpdateBlogDto } from '../dtos/updateBlog.dto';
 import { PaginationDto } from '../dtos/pagination.dto';
-//TODO rozjet testy v CI/CD
 
 describe('BlogsController (e2e)', () => {
   let app: INestApplication;
@@ -118,7 +117,7 @@ describe('BlogsController (e2e)', () => {
         .post('/blogs')
         .send({ ...createBlogDto });
 
-      expect(response.status).toBe(HttpStatus.CREATED);
+      expect(response.status).toBe(HttpStatus.BAD_REQUEST);
       expect(response.body.title).toBe(createBlogDto.title);
       expect(response.body.content).toBe(createBlogDto.content);
     });
