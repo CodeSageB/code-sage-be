@@ -117,7 +117,7 @@ describe('BlogsController (e2e)', () => {
         .post('/blogs')
         .send({ ...createBlogDto });
 
-      expect(response.status).toBe(HttpStatus.BAD_REQUEST);
+      expect(response.status).toBe(HttpStatus.CREATED);
       expect(response.body.title).toBe(createBlogDto.title);
       expect(response.body.content).toBe(createBlogDto.content);
     });
