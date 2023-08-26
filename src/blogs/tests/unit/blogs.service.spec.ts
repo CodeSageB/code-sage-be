@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { BlogsService } from './blogs.service';
+import { BlogsService } from '../../blogs.service';
 import { Repository } from 'typeorm';
 import { BlogEntity } from '../../../typeorm/entities/Blog.entity';
 import { getRepositoryToken } from '@nestjs/typeorm';

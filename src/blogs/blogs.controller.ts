@@ -4,17 +4,18 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
   NotFoundException,
   Param,
   ParseUUIDPipe,
   Post,
   Put
 } from '@nestjs/common';
-import { CreateBlogDto } from '../../dtos/createBlog.dto';
-import { BlogsService } from '../../services/blogs/blogs.service';
-import { UpdateBlogDto } from '../../dtos/updateBlog.dto';
-import { PaginationDto } from '../../dtos/pagination.dto';
-import { Mappers } from '../../mappers';
+import { CreateBlogDto } from './dtos/createBlog.dto';
+import { BlogsService } from './blogs.service';
+import { UpdateBlogDto } from './dtos/updateBlog.dto';
+import { PaginationDto } from './dtos/pagination.dto';
+import { Mappers } from './mappers';
 
 @Controller('blogs')
 export class BlogsController {
@@ -32,6 +33,7 @@ export class BlogsController {
   }
 
   @Post('all')
+  @HttpCode(200)
   async getBlogs(@Body() paginationDto: PaginationDto) {
     const blogs = await this.blogService.fetchBlogs(paginationDto);
 
