@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { CreateBlogDto } from '../../dtos/createBlog.dto';
-import { UpdateBlogDto } from '../../dtos/updateBlog.dto';
-import { PaginationDto } from '../../dtos/pagination.dto';
+import { CreateBlogDto } from './dtos/createBlog.dto';
+import { UpdateBlogDto } from './dtos/updateBlog.dto';
+import { PaginationDto } from './dtos/pagination.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { BlogEntity } from '../../../typeorm/entities/Blog.entity';
+import { BlogEntity } from '../typeorm/entities/Blog.entity';
 import { Repository } from 'typeorm';
-import { Mappers } from '../../mappers';
+import { Mappers } from './mappers';
 
 @Injectable()
 export class BlogsService {
