@@ -18,7 +18,7 @@ describe('BlogsController (integration)', () => {
   let pgContainer: StartedTestContainer;
   let blogRepository: Repository<BlogEntity>;
 
-  const seedDatabase = async function (data: CreateBlogDto[]) {
+  const seedDatabase = async function (data: CreateBlogDto[]): Promise<void> {
     const entities = data.map((blog) => blogRepository.create(blog));
     await blogRepository.save(entities);
   };

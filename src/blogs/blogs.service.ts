@@ -4,7 +4,7 @@ import { UpdateBlogDto } from './dtos/updateBlog.dto';
 import { PaginationDto } from './dtos/pagination.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { BlogEntity } from '../typeorm/entities/Blog.entity';
-import { Repository } from 'typeorm';
+import { DeleteResult, Repository } from 'typeorm';
 import { Mappers } from './mappers';
 
 @Injectable()
@@ -20,15 +20,18 @@ export class BlogsService {
     );
   }
 
-  public fetchBlogs(paginationDto: PaginationDto) {
+  public fetchBlogs(paginationDto: PaginationDto): Promise<BlogEntity[]> {
     return this.blogRepository.find({ take: paginationDto.take });
   }
 
-  public fetchBlog(uuid: string) {
+  public fetchBlog(uuid: string): Promise<BlogEntity> {
     return this.blogRepository.findOneBy({ externalId: uuid });
   }
 
-  public async updateBlog(uuid: string, blogData: UpdateBlogDto) {
+  public async updateBlog(
+    uuid: string,
+    blogData: UpdateBlogDto
+  ): Promise<BlogEntity> {
     await this.blogRepository.update(
       { externalId: uuid },
       Mappers.updateBlogDtoToBlogEntity(blogData)
@@ -37,7 +40,7 @@ export class BlogsService {
     return this.fetchBlog(uuid);
   }
 
-  public deleteBlog(uuid: string) {
+  public deleteBlog(uuid: string): Promise<DeleteResult> {
     return this.blogRepository.delete({ externalId: uuid });
   }
 }
