@@ -8,11 +8,11 @@ const envVariables = {
 };
 
 export class ConfigTestHelper {
-  public static get getTestEnvVariables() {
+  public static get getTestEnvVariables(): Record<string, string> {
     return { ...envVariables };
   }
 
-  public static get getPort() {
+  public static get getPort(): number {
     return 5432;
   }
 
