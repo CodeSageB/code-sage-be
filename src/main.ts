@@ -6,7 +6,7 @@ import { AllExceptionsFilter } from './filters/all-exceptions.filter';
 import * as process from 'process';
 
 async function bootstrap(): Promise<void> {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, { cors: true });
 
   const logger = new Logger();
 

@@ -3,7 +3,7 @@ import { CreateBlogDto } from './dtos/createBlog.dto';
 import { UpdateBlogDto } from './dtos/updateBlog.dto';
 import { PaginationDto } from './dtos/pagination.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { BlogEntity } from '../typeorm/entities/Blog.entity';
+import { BlogEntity } from './entities/Blog.entity';
 import { DeleteResult, Repository } from 'typeorm';
 import { Mappers } from './mappers';
 

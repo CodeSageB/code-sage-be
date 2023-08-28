@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { BlogsController } from '../../blogs.controller';
 import { BlogsService } from '../../blogs.service';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { BlogEntity } from '../../../typeorm/entities/Blog.entity';
+import { BlogEntity } from '../../entities/Blog.entity';
 import { Repository } from 'typeorm';
 
 describe('BlogsController', () => {
