@@ -22,6 +22,9 @@ export class BlogEntity {
   @Column({ type: 'text' })
   content: string;
 
+  @Column('text', { array: true })
+  tags: string[];
+
   @CreateDateColumn({ type: 'timestamptz' })
   created: Date;
 

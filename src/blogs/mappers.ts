@@ -1,5 +1,5 @@
 import { BlogDto } from './dtos/blog.dto';
-import { BlogEntity } from '../typeorm/entities/Blog.entity';
+import { BlogEntity } from './entities/Blog.entity';
 import { CreateBlogDto } from './dtos/createBlog.dto';
 import { UpdateBlogDto } from './dtos/updateBlog.dto';
 
@@ -9,6 +9,7 @@ export class Mappers {
       id: blogEntity.externalId,
       title: blogEntity.title,
       content: blogEntity.content,
+      tags: blogEntity.tags,
       created: blogEntity.created
     };
   }
@@ -28,6 +29,7 @@ export class Mappers {
 
     blog.title = createUpdateDto.title;
     blog.content = createUpdateDto.content;
+    blog.tags = createUpdateDto.tags;
 
     return blog;
   }

@@ -2,7 +2,7 @@ import { HttpStatus, INestApplication, ValidationPipe } from '@nestjs/common';
 import { GenericContainer, StartedTestContainer } from 'testcontainers';
 import { Test } from '@nestjs/testing';
 import { getRepositoryToken, TypeOrmModule } from '@nestjs/typeorm';
-import { BlogEntity } from '../../../typeorm/entities/Blog.entity';
+import { BlogEntity } from '../../entities/Blog.entity';
 import { BlogsController } from '../../blogs.controller';
 import * as request from 'supertest';
 import { BlogsService } from '../../blogs.service';
@@ -11,7 +11,7 @@ import { Repository } from 'typeorm';
 import { CreateBlogDto } from '../../dtos/createBlog.dto';
 import { UpdateBlogDto } from '../../dtos/updateBlog.dto';
 import { PaginationDto } from '../../dtos/pagination.dto';
-import { blogTestData } from '../../../shared/test/blog-test-data';
+import { blogTestArray, blogTest } from '../../../shared/test/blog-test-array';
 
 describe('BlogsController (integration)', () => {
   let app: INestApplication;
@@ -62,10 +62,7 @@ describe('BlogsController (integration)', () => {
   describe('POST /blogs', () => {
     it('should create a new blog', async () => {
       // Arrange
-      const createBlogDto: CreateBlogDto = {
-        title: 'Test Title',
-        content: 'Test Content'
-      };
+      const createBlogDto: CreateBlogDto = { ...blogTest };
 
       // Act
       const response = await request(app.getHttpServer())
@@ -76,14 +73,28 @@ describe('BlogsController (integration)', () => {
       expect(response.status).toBe(HttpStatus.CREATED);
       expect(response.body.title).toBe(createBlogDto.title);
       expect(response.body.content).toBe(createBlogDto.content);
+      expect(response.body.tags).toEqual(
+        expect.arrayContaining(createBlogDto.tags)
+      );
+      expect(response.body.created).toBeDefined();
     });
 
     it('should return 400 if blog data is not valid', async () => {
       // Arrange
-      const createBlogDto: CreateBlogDto = {
-        title: '',
-        content: 'Test Content'
-      };
+      const createBlogDto: CreateBlogDto = { ...blogTest, title: '' };
+
+      // Act
+      const response = await request(app.getHttpServer())
+        .post('/blogs')
+        .send(createBlogDto);
+
+      // Assert
+      expect(response.status).toBe(HttpStatus.BAD_REQUEST);
+    });
+
+    it('should return 400 when tags is empty', async () => {
+      // Arrange
+      const createBlogDto: CreateBlogDto = { ...blogTest, tags: [] };
 
       // Act
       const response = await request(app.getHttpServer())
@@ -98,7 +109,7 @@ describe('BlogsController (integration)', () => {
   describe('POST /blogs/all', () => {
     it('should return 10 blogs by default', async () => {
       // Arrange
-      await seedDatabase(blogTestData);
+      await seedDatabase(blogTestArray);
 
       // Act
       const response = await request(app.getHttpServer()).post('/blogs/all');
@@ -110,7 +121,7 @@ describe('BlogsController (integration)', () => {
 
     it('should return blogs according to pagination', async () => {
       // Arrange
-      await seedDatabase(blogTestData);
+      await seedDatabase(blogTestArray);
 
       const pagination: PaginationDto = {
         take: 5
@@ -139,10 +150,7 @@ describe('BlogsController (integration)', () => {
   describe('GET /blogs/:id', () => {
     it('should return a specific blog by ID', async () => {
       // Arrange
-      const testBlog = await blogRepository.save({
-        title: 'Test Title',
-        content: 'Test Content'
-      });
+      const testBlog = await blogRepository.save({ ...blogTest });
 
       // Act
       const response = await request(app.getHttpServer()).get(
@@ -153,6 +161,7 @@ describe('BlogsController (integration)', () => {
       expect(response.status).toBe(HttpStatus.OK);
       expect(response.body.title).toBe(testBlog.title);
       expect(response.body.content).toBe(testBlog.content);
+      expect(response.body.tags).toEqual(expect.arrayContaining(testBlog.tags));
     });
 
     it('should return 404 if blog is not found', async () => {
@@ -185,14 +194,12 @@ describe('BlogsController (integration)', () => {
   describe('UPDATE /blogs/:id', () => {
     it('should update a specific blog by ID', async () => {
       // Arrange
-      const testBlog = await blogRepository.save({
-        title: 'Test Title',
-        content: 'Test Content'
-      });
+      const testBlog = await blogRepository.save({ ...blogTest });
 
       const updateBlogData: UpdateBlogDto = {
         title: 'Updated Title',
-        content: 'Updated Content'
+        content: 'Updated Content',
+        tags: ['updated']
       };
 
       // Act
@@ -204,6 +211,9 @@ describe('BlogsController (integration)', () => {
       expect(response.status).toBe(HttpStatus.OK);
       expect(response.body.title).toBe(updateBlogData.title);
       expect(response.body.content).toBe(updateBlogData.content);
+      expect(response.body.tags).toEqual(
+        expect.arrayContaining(updateBlogData.tags)
+      );
 
       // Araange
       const updateBlogTitle: UpdateBlogDto = {
@@ -221,6 +231,9 @@ describe('BlogsController (integration)', () => {
       expect(responseWithUpdatedTitle.body.content).toBe(
         updateBlogData.content
       );
+      expect(responseWithUpdatedTitle.body.tags).toEqual(
+        expect.arrayContaining(updateBlogData.tags)
+      );
     });
 
     it('should return 404 if blog is not found', async () => {
@@ -230,10 +243,7 @@ describe('BlogsController (integration)', () => {
       // Act
       const response = await request(app.getHttpServer())
         .put(`/blogs/${nonExistentId}`)
-        .send({
-          title: 'Updated Title',
-          content: 'Updated Content'
-        });
+        .send({ ...blogTest });
 
       // Assert
       expect(response.status).toBe(HttpStatus.NOT_FOUND);
@@ -246,10 +256,7 @@ describe('BlogsController (integration)', () => {
       // Act
       const response = await request(app.getHttpServer())
         .put(`/blogs/${invalidId}`)
-        .send({
-          title: 'Updated Title',
-          content: 'Updated Content'
-        });
+        .send({ ...blogTest });
 
       // Assert
       expect(response.status).toBe(HttpStatus.BAD_REQUEST);
@@ -259,10 +266,7 @@ describe('BlogsController (integration)', () => {
   describe('DELETE /blogs/:id', () => {
     it('should delete a specific blog by ID', async () => {
       // Arrange
-      const testBlog = await blogRepository.save({
-        title: 'Test Title',
-        content: 'Test Content'
-      });
+      const testBlog = await blogRepository.save({ ...blogTest });
 
       // Act
       const response = await request(app.getHttpServer()).delete(
@@ -288,10 +292,7 @@ describe('BlogsController (integration)', () => {
 
     it('should return 404 when deleting blog that had been deleted', async () => {
       // Arrange
-      const testBlog = await blogRepository.save({
-        title: 'Test Title',
-        content: 'Test Content'
-      });
+      const testBlog = await blogRepository.save({ ...blogTest });
 
       // Act
       const response = await request(app.getHttpServer()).delete(

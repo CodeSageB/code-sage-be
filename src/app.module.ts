@@ -1,7 +1,7 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { BlogsModule } from './blogs/blogs.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { BlogEntity } from './typeorm/entities/Blog.entity';
+import { BlogEntity } from './blogs/entities/Blog.entity';
 import { LoggerMiddleware } from './middleware/logger.middleware';
 import { ConfigModule } from '@nestjs/config';
 import * as process from 'process';
