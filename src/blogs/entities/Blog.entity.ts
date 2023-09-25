@@ -3,9 +3,11 @@ import {
   CreateDateColumn,
   Entity,
   Generated,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn
 } from 'typeorm';
+import { BlogTranslationEntity } from './BlogTranslation.entity';
 
 @Entity('Blog')
 export class BlogEntity {
@@ -16,12 +18,6 @@ export class BlogEntity {
   @Generated('uuid')
   externalId: string;
 
-  @Column({ type: 'text' })
-  title: string;
-
-  @Column({ type: 'text' })
-  content: string;
-
   @Column('text', { array: true })
   tags: string[];
 
@@ -30,4 +26,9 @@ export class BlogEntity {
 
   @UpdateDateColumn({ type: 'timestamptz' })
   updated: Date;
+
+  @OneToMany(() => BlogTranslationEntity, (translation) => translation.blog, {
+    eager: true
+  })
+  translations: BlogTranslationEntity[];
 }

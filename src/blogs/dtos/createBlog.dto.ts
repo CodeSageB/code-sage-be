@@ -3,18 +3,16 @@ import {
   IsArray,
   IsNotEmpty,
   IsString,
-  MaxLength
+  ValidateNested
 } from 'class-validator';
+import { Type } from 'class-transformer';
+import { CreateBlogTranslationDto } from './createBlogTranslation.dto';
 
 export class CreateBlogDto {
-  @IsNotEmpty()
-  @IsString()
-  @MaxLength(100)
-  title: string;
-
-  @IsNotEmpty()
-  @IsString()
-  content: string;
+  @IsArray()
+  @Type(() => CreateBlogTranslationDto)
+  @ValidateNested({ each: true })
+  translations: CreateBlogTranslationDto[];
 
   @IsNotEmpty()
   @IsArray()

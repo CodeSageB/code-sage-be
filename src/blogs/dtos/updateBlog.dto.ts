@@ -4,8 +4,11 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
-  MaxLength
+  MaxLength,
+  ValidateNested
 } from 'class-validator';
+import { Type } from 'class-transformer';
+import { UpdateBlogTranslationDto } from './updateBlogTranslation.dto';
 
 export class UpdateBlogDto {
   @MaxLength(100)
@@ -24,5 +27,16 @@ export class UpdateBlogDto {
   @IsArray()
   @IsString({ each: true })
   @ArrayMinSize(1)
+  tags?: string[];
+}
+
+export class NewUpdateBlogDto {
+  @IsArray()
+  @Type(() => UpdateBlogTranslationDto)
+  @ValidateNested({ each: true })
+  translations?: UpdateBlogTranslationDto[];
+
+  @IsArray()
+  @IsString({ each: true })
   tags?: string[];
 }
