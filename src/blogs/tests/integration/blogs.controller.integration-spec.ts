@@ -12,7 +12,7 @@ import { CreateBlogDto } from '../../dtos/createBlog.dto';
 import { UpdateBlogDto } from '../../dtos/updateBlog.dto';
 import { PaginationDto } from '../../dtos/pagination.dto';
 import { blogTestArray, blogTest } from '../../../shared/test/blog-test-data';
-
+//TODO fix
 describe('BlogsController (integration)', () => {
   let app: INestApplication;
   let pgContainer: StartedTestContainer;
