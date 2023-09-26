@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateBlogDto } from './dtos/createBlog.dto';
-import { NewUpdateBlogDto } from './dtos/updateBlog.dto';
+import { UpdateBlogDto } from './dtos/updateBlog.dto';
 import { PaginationDto } from './dtos/pagination.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { BlogEntity } from './entities/Blog.entity';
@@ -48,7 +48,7 @@ export class BlogsService {
 
   public async updateBlog(
     uuid: string,
-    blogData: NewUpdateBlogDto
+    blogData: UpdateBlogDto
   ): Promise<BlogEntity> {
     const blogEntity = await this.blogRepository.findOne({
       where: { externalId: uuid },

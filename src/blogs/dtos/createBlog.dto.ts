@@ -1,5 +1,6 @@
 import {
   ArrayMinSize,
+  ArrayNotEmpty,
   IsArray,
   IsNotEmpty,
   IsString,
@@ -10,6 +11,7 @@ import { CreateBlogTranslationDto } from './createBlogTranslation.dto';
 
 export class CreateBlogDto {
   @IsArray()
+  @ArrayNotEmpty()
   @Type(() => CreateBlogTranslationDto)
   @ValidateNested({ each: true })
   translations: CreateBlogTranslationDto[];

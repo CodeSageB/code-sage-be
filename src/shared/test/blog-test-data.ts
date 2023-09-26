@@ -232,3 +232,41 @@ export const blogTest: CreateBlogDto = {
   ],
   tags: ['programming', 'technology']
 };
+
+export const blogTest2: CreateBlogDto = {
+  translations: [
+    {
+      title: 'Gaming World',
+      content: 'Latest in the gaming world.',
+      language: LanguagesEnum.EN
+    },
+    {
+      title: 'Herní svět',
+      content: 'Nejnovější v herním světě.',
+      language: LanguagesEnum.CS
+    }
+  ],
+  tags: ['gaming', 'entertainment']
+};
+
+export const blogTestCs: CreateBlogDto = {
+  translations: [
+    {
+      title: 'Python to je stačka',
+      content: 'Neprogramuj v pythonu pokud máš soudnost',
+      language: LanguagesEnum.CS
+    }
+  ],
+  tags: ['python', 'shit']
+};
+
+export const blogTestEn: CreateBlogDto = {
+  translations: [
+    {
+      title: 'GO for the win',
+      content: 'Title is self explaining',
+      language: LanguagesEnum.EN
+    }
+  ],
+  tags: ['go', 'supremacy']
+};

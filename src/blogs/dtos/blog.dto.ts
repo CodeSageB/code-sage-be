@@ -7,7 +7,7 @@ export class BlogDto {
   created: Date;
 }
 
-class BlogTranslationDto {
+export class BlogTranslationDto {
   title: string;
   content: string;
   language: string;

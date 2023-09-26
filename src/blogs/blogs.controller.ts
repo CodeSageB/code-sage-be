@@ -16,7 +16,7 @@ import {
 } from '@nestjs/common';
 import { CreateBlogDto } from './dtos/createBlog.dto';
 import { BlogsService } from './blogs.service';
-import { NewUpdateBlogDto } from './dtos/updateBlog.dto';
+import { UpdateBlogDto } from './dtos/updateBlog.dto';
 import { PaginationDto } from './dtos/pagination.dto';
 import { Mappers } from './mappers';
 import { CreatedBlogDto, BlogDto, UpdatedBlogDto } from './dtos/blog.dto';
@@ -69,7 +69,7 @@ export class BlogsController {
   @Put(':id')
   async updateBlog(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() updateBlogDto: NewUpdateBlogDto
+    @Body() updateBlogDto: UpdateBlogDto
   ): Promise<UpdatedBlogDto> {
     const blog = await this.blogService.updateBlog(id, updateBlogDto);
 
