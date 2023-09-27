@@ -62,7 +62,6 @@ export class BlogsController {
     if (!blog) {
       throw new NotFoundException('Blog not found');
     }
-    debugger;
 
     return Mappers.blogEntityToBlogDto(blog, lang.lang);
   }

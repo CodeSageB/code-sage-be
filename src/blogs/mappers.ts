@@ -10,7 +10,6 @@ export class Mappers {
     blogEntity: BlogEntity,
     language: LanguagesEnum
   ): BlogDto {
-    debugger;
     return {
       id: blogEntity.externalId,
       title: blogEntity.translations[0].title,
