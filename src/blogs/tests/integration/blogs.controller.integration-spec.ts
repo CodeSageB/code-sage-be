@@ -21,7 +21,8 @@ import {
 import { LanguagesEnum } from '../../../shared/enums/languages.enum';
 import { BlogTranslationDto } from '../../dtos/blog.dto';
 import { BlogTranslationEntity } from '../../entities/BlogTranslation.entity';
-//TODO fix
+import { Mappers } from '../../mappers';
+//TODO fix + add more tests
 describe('BlogsController (integration)', () => {
   let app: INestApplication;
   let pgContainer: StartedTestContainer;
@@ -29,8 +30,23 @@ describe('BlogsController (integration)', () => {
   let blogTranslationRepository: Repository<BlogTranslationEntity>;
 
   const seedDatabase = async function (data: CreateBlogDto[]): Promise<void> {
-    const entities = data.map((blog) => blogRepository.create(blog));
-    await blogRepository.save(entities);
+    // const entities = data.map((blog) => blogRepository.create(blog));
+    for (const blogData of data) {
+      const blogEntity = new BlogEntity();
+      blogEntity.tags = blogData.tags;
+
+      const savedBlogEntity = await blogRepository.save(blogEntity);
+
+      for (const translation of blogData.translations) {
+        const blogTranslationEntity =
+          Mappers.createBlogTranslationDtoToBlogTranslationEntity(
+            translation,
+            savedBlogEntity
+          );
+
+        await blogTranslationRepository.save(blogTranslationEntity);
+      }
+    }
   };
 
   beforeAll(async () => {
@@ -206,7 +222,19 @@ describe('BlogsController (integration)', () => {
     it('should return a specific blog by ID and language', async () => {
       // Arrange
       const testBlog = await blogRepository.save({ ...blogTest });
+      const queryBuilder = blogRepository.createQueryBuilder('blog');
 
+      // Join with BlogTranslation entity
+      queryBuilder.leftJoinAndSelect('blog.translations', 'translation');
+
+      // Filter by language
+      queryBuilder.where('translation.language = :lang', { lang: 'en' });
+
+      // Apply pagination
+      queryBuilder.take(10);
+
+      const res = await queryBuilder.getMany();
+      console.log(res);
       // Act
       const response = await request(app.getHttpServer()).get(
         `/blogs/${testBlog.externalId}?language=${LanguagesEnum.EN}`

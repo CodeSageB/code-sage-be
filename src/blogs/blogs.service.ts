@@ -49,7 +49,7 @@ export class BlogsService {
     queryBuilder.leftJoinAndSelect('blog.translations', 'translation');
 
     // Filter by language
-    queryBuilder.where('translation.language = :lang', { lang });
+    queryBuilder.where('translation.language = :lang', { lang: lang });
 
     // Apply pagination
     queryBuilder.take(paginationDto.take);
