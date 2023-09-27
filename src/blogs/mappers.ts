@@ -10,14 +10,11 @@ export class Mappers {
     blogEntity: BlogEntity,
     language: LanguagesEnum
   ): BlogDto {
-    const translation = blogEntity.translations.find(
-      (translation) => translation.language === language
-    );
-
+    debugger;
     return {
       id: blogEntity.externalId,
-      title: translation.title,
-      content: translation.content,
+      title: blogEntity.translations[0].title,
+      content: blogEntity.translations[0].content,
       tags: blogEntity.tags,
       created: blogEntity.created,
       language

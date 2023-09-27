@@ -163,7 +163,9 @@ describe('BlogsController (integration)', () => {
       await seedDatabase(blogTestArray);
 
       // Act
-      const response = await request(app.getHttpServer()).post('/blogs/all');
+      const response = await request(app.getHttpServer()).post(
+        '/blogs/all?lang=cs'
+      );
 
       // Assert
       expect(response.status).toBe(HttpStatus.OK);
@@ -180,7 +182,7 @@ describe('BlogsController (integration)', () => {
 
       // Act
       const response = await request(app.getHttpServer())
-        .post('/blogs/all')
+        .post('/blogs/all?lang=en')
         .send(pagination);
 
       // Assert
@@ -190,7 +192,9 @@ describe('BlogsController (integration)', () => {
 
     it('should return empty array if no blogs', async () => {
       // Act
-      const response = await request(app.getHttpServer()).post('/blogs/all');
+      const response = await request(app.getHttpServer()).post(
+        '/blogs/all?lang=en'
+      );
 
       // Assert
       expect(response.status).toBe(HttpStatus.OK);

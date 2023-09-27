@@ -46,7 +46,7 @@ export class BlogsController {
     @Body() paginationDto: PaginationDto,
     @Query() lang: LanguageDto
   ): Promise<BlogDto[]> {
-    const blogs = await this.blogService.fetchBlogs(paginationDto);
+    const blogs = await this.blogService.fetchBlogs(paginationDto, lang.lang);
 
     return blogs.map((blog) => Mappers.blogEntityToBlogDto(blog, lang.lang));
   }
@@ -57,11 +57,12 @@ export class BlogsController {
     @Param('id', ParseUUIDPipe) id: string,
     @Query() lang: LanguageDto
   ): Promise<BlogDto> {
-    const blog = await this.blogService.fetchBlog(id);
+    const blog = await this.blogService.fetchBlog(id, lang.lang);
 
     if (!blog) {
       throw new NotFoundException('Blog not found');
     }
+    debugger;
 
     return Mappers.blogEntityToBlogDto(blog, lang.lang);
   }

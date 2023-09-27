@@ -7,6 +7,7 @@ import { BlogEntity } from './entities/Blog.entity';
 import { DeleteResult, Repository } from 'typeorm';
 import { Mappers } from './mappers';
 import { BlogTranslationEntity } from './entities/BlogTranslation.entity';
+import { LanguagesEnum } from '../shared/enums/languages.enum';
 
 @Injectable()
 export class BlogsService {
@@ -38,12 +39,43 @@ export class BlogsService {
     });
   }
 
-  public fetchBlogs(paginationDto: PaginationDto): Promise<BlogEntity[]> {
-    return this.blogRepository.find({ take: paginationDto.take });
+  public async fetchBlogs(
+    paginationDto: PaginationDto,
+    lang: LanguagesEnum
+  ): Promise<BlogEntity[]> {
+    const queryBuilder = this.blogRepository.createQueryBuilder('blog');
+
+    // Join with BlogTranslation entity
+    queryBuilder.leftJoinAndSelect('blog.translations', 'translation');
+
+    // Filter by language
+    queryBuilder.where('translation.language = :lang', { lang });
+
+    // Apply pagination
+    queryBuilder.take(paginationDto.take);
+
+    return await queryBuilder.getMany();
   }
 
-  public fetchBlog(uuid: string): Promise<BlogEntity> {
-    return this.blogRepository.findOneBy({ externalId: uuid });
+  public async fetchBlog(
+    uuid: string,
+    lang: LanguagesEnum
+  ): Promise<BlogEntity> {
+    const queryBuilder = this.blogRepository.createQueryBuilder('blog');
+
+    // Join with BlogTranslation entity
+    queryBuilder.leftJoinAndSelect(
+      'blog.translations',
+      'translation',
+      'translation.language = :lang',
+      { lang: lang }
+    );
+
+    // Filter by externalId
+    queryBuilder.where('blog.externalId = :uuid', { uuid });
+
+    return await queryBuilder.getOne();
+    // return this.blogRepository.findOneBy({ externalId: uuid });
   }
 
   public async updateBlog(
