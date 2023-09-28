@@ -22,7 +22,6 @@ import { LanguagesEnum } from '../../../shared/enums/languages.enum';
 import { BlogTranslationDto } from '../../dtos/blog.dto';
 import { BlogTranslationEntity } from '../../entities/BlogTranslation.entity';
 import { Mappers } from '../../mappers';
-//TODO fix + add more tests
 describe('BlogsController (integration)', () => {
   let app: INestApplication;
   let pgContainer: StartedTestContainer;
@@ -30,7 +29,6 @@ describe('BlogsController (integration)', () => {
   let blogTranslationRepository: Repository<BlogTranslationEntity>;
 
   const seedDatabase = async function (data: CreateBlogDto[]): Promise<void> {
-    // const entities = data.map((blog) => blogRepository.create(blog));
     for (const blogData of data) {
       await createBlog(blogData);
     }
