@@ -4,6 +4,7 @@ import { BlogsService } from '../../blogs.service';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { BlogEntity } from '../../entities/Blog.entity';
 import { Repository } from 'typeorm';
+import { BlogTranslationEntity } from '../../entities/BlogTranslation.entity';
 
 describe('BlogsController', () => {
   let controller: BlogsController;
@@ -14,6 +15,10 @@ describe('BlogsController', () => {
         BlogsService,
         {
           provide: getRepositoryToken(BlogEntity),
+          useClass: Repository
+        },
+        {
+          provide: getRepositoryToken(BlogTranslationEntity),
           useClass: Repository
         }
       ],
