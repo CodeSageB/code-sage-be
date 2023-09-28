@@ -63,6 +63,10 @@ export class BlogsController {
       throw new NotFoundException('Blog not found');
     }
 
+    if (blog.translations.length === 0) {
+      throw new NotFoundException('Blog has no translation for this language');
+    }
+
     return Mappers.blogEntityToBlogDto(blog, lang.lang);
   }
 

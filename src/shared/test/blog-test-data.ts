@@ -249,7 +249,7 @@ export const blogTest2: CreateBlogDto = {
   tags: ['gaming', 'entertainment']
 };
 
-export const blogTestCs: CreateBlogDto = {
+export const blogTestWithCsTranslation: CreateBlogDto = {
   translations: [
     {
       title: 'Python to je stačka',
@@ -260,7 +260,7 @@ export const blogTestCs: CreateBlogDto = {
   tags: ['python', 'shit']
 };
 
-export const blogTestEn: CreateBlogDto = {
+export const blogTestWithEnTranslation: CreateBlogDto = {
   translations: [
     {
       title: 'GO for the win',

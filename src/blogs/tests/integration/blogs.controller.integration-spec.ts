@@ -15,8 +15,8 @@ import {
   blogTestArray,
   blogTest,
   blogTest2,
-  blogTestEn,
-  blogTestCs
+  blogTestWithEnTranslation,
+  blogTestWithCsTranslation
 } from '../../../shared/test/blog-test-data';
 import { LanguagesEnum } from '../../../shared/enums/languages.enum';
 import { BlogTranslationDto } from '../../dtos/blog.dto';
@@ -32,21 +32,31 @@ describe('BlogsController (integration)', () => {
   const seedDatabase = async function (data: CreateBlogDto[]): Promise<void> {
     // const entities = data.map((blog) => blogRepository.create(blog));
     for (const blogData of data) {
-      const blogEntity = new BlogEntity();
-      blogEntity.tags = blogData.tags;
-
-      const savedBlogEntity = await blogRepository.save(blogEntity);
-
-      for (const translation of blogData.translations) {
-        const blogTranslationEntity =
-          Mappers.createBlogTranslationDtoToBlogTranslationEntity(
-            translation,
-            savedBlogEntity
-          );
-
-        await blogTranslationRepository.save(blogTranslationEntity);
-      }
+      await createBlog(blogData);
     }
+  };
+
+  const createBlog = async function (
+    blogData: CreateBlogDto
+  ): Promise<BlogEntity> {
+    const blogEntity = new BlogEntity();
+    blogEntity.tags = blogData.tags;
+
+    const savedBlogEntity = await blogRepository.save(blogEntity);
+
+    for (const translation of blogData.translations) {
+      const blogTranslationEntity =
+        Mappers.createBlogTranslationDtoToBlogTranslationEntity(
+          translation,
+          savedBlogEntity
+        );
+
+      await blogTranslationRepository.save(blogTranslationEntity);
+    }
+
+    return await blogRepository.findOneBy({
+      externalId: savedBlogEntity.externalId
+    });
   };
 
   beforeAll(async () => {
@@ -221,23 +231,11 @@ describe('BlogsController (integration)', () => {
   describe('GET /blogs/:id', () => {
     it('should return a specific blog by ID and language', async () => {
       // Arrange
-      const testBlog = await blogRepository.save({ ...blogTest });
-      const queryBuilder = blogRepository.createQueryBuilder('blog');
+      const testBlog = await createBlog({ ...blogTest });
 
-      // Join with BlogTranslation entity
-      queryBuilder.leftJoinAndSelect('blog.translations', 'translation');
-
-      // Filter by language
-      queryBuilder.where('translation.language = :lang', { lang: 'en' });
-
-      // Apply pagination
-      queryBuilder.take(10);
-
-      const res = await queryBuilder.getMany();
-      console.log(res);
       // Act
       const response = await request(app.getHttpServer()).get(
-        `/blogs/${testBlog.externalId}?language=${LanguagesEnum.EN}`
+        `/blogs/${testBlog.externalId}?lang=${LanguagesEnum.EN}`
       );
 
       // Assert
@@ -255,7 +253,20 @@ describe('BlogsController (integration)', () => {
 
       // Act
       const response = await request(app.getHttpServer()).get(
-        `/blogs/${nonExistingId}?language=${LanguagesEnum.EN}`
+        `/blogs/${nonExistingId}?lang=${LanguagesEnum.EN}`
+      );
+
+      // Assert
+      expect(response.status).toBe(HttpStatus.NOT_FOUND);
+    });
+
+    it('should return 404 when blog has no translation for the language', async () => {
+      // Arrange
+      const testBlog = await createBlog({ ...blogTestWithEnTranslation });
+
+      // Act
+      const response = await request(app.getHttpServer()).get(
+        `/blogs/${testBlog.externalId}?lang=${LanguagesEnum.CS}`
       );
 
       // Assert
@@ -268,7 +279,7 @@ describe('BlogsController (integration)', () => {
 
       // Act
       const response = await request(app.getHttpServer()).get(
-        `/blogs/${invalidId}?language=${LanguagesEnum.EN}`
+        `/blogs/${invalidId}?lang=${LanguagesEnum.EN}`
       );
 
       // Assert
@@ -314,11 +325,13 @@ describe('BlogsController (integration)', () => {
       );
     });
 
-    it('should add new language if didn"t exist', async () => {
+    it('should add new language translation if did not exist', async () => {
       // Arrange
-      const testBlog = await blogRepository.save({ ...blogTestEn });
+      const testBlog = await createBlog({ ...blogTestWithEnTranslation });
 
-      const updateBlogData: UpdateBlogDto = { ...blogTestCs };
+      const updateBlogData: UpdateBlogDto = {
+        translations: blogTestWithCsTranslation.translations
+      };
 
       // Act
       const response = await request(app.getHttpServer())

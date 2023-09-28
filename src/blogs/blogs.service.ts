@@ -60,7 +60,7 @@ export class BlogsService {
   public async fetchBlog(
     uuid: string,
     lang: LanguagesEnum
-  ): Promise<BlogEntity> {
+  ): Promise<BlogEntity | null> {
     const queryBuilder = this.blogRepository.createQueryBuilder('blog');
 
     // Join with BlogTranslation entity
@@ -75,7 +75,6 @@ export class BlogsService {
     queryBuilder.where('blog.externalId = :uuid', { uuid });
 
     return await queryBuilder.getOne();
-    // return this.blogRepository.findOneBy({ externalId: uuid });
   }
 
   public async updateBlog(
