@@ -1,65 +1,272 @@
 import { CreateBlogDto } from '../../blogs/dtos/createBlog.dto';
+export enum LanguagesEnum {
+  CS = 'cs',
+  EN = 'en'
+}
 
 export const blogTestArray: CreateBlogDto[] = [
   {
-    title: 'test title 1',
-    content: 'test content 1',
-    tags: ['test tag 1', 'test tag 2']
+    translations: [
+      {
+        title: 'Exploring Space',
+        content: 'The final frontier.',
+        language: LanguagesEnum.EN
+      },
+      {
+        title: 'Prozkoumání vesmíru',
+        content: 'Poslední hranice.',
+        language: LanguagesEnum.CS
+      }
+    ],
+    tags: ['space', 'exploration']
   },
   {
-    title: 'test title 2',
-    content: 'test content 2',
-    tags: ['test tag 3', 'test tag 4']
+    translations: [
+      {
+        title: 'Coffee Lovers',
+        content: 'All about coffee.',
+        language: LanguagesEnum.EN
+      }
+    ],
+    tags: ['coffee', 'lifestyle']
   },
   {
-    title: 'test title 3',
-    content: 'test content 3',
-    tags: ['test tag 5', 'test tag 6']
+    translations: [
+      {
+        title: 'The Art of Cooking',
+        content: 'Culinary secrets.',
+        language: LanguagesEnum.EN
+      },
+      {
+        title: 'Umění vaření',
+        content: 'Kulinařská tajemství.',
+        language: LanguagesEnum.CS
+      }
+    ],
+    tags: ['cooking', 'food']
   },
   {
-    title: 'test title 4',
-    content: 'test content 4',
-    tags: ['test tag 7']
+    translations: [
+      {
+        title: 'Travel on a Budget',
+        content: 'See the world without breaking the bank.',
+        language: LanguagesEnum.EN
+      }
+    ],
+    tags: ['travel', 'budget']
   },
   {
-    title: 'test title 5',
-    content: 'test content 5',
-    tags: ['test tag 8', 'test tag 9']
+    translations: [
+      {
+        title: 'Programming 101',
+        content: 'Introduction to programming.',
+        language: LanguagesEnum.EN
+      },
+      {
+        title: 'Programování 101',
+        content: 'Úvod do programování.',
+        language: LanguagesEnum.CS
+      }
+    ],
+    tags: ['programming', 'technology']
   },
   {
-    title: 'test title 6',
-    content: 'test content 6',
-    tags: ['test tag 8', 'test tag 9']
+    translations: [
+      {
+        title: 'Fitness Goals',
+        content: 'Achieve your fitness goals.',
+        language: LanguagesEnum.EN
+      },
+      {
+        title: 'Fitness cíle',
+        content: 'Dosáhněte svých fitness cílů.',
+        language: LanguagesEnum.CS
+      }
+    ],
+    tags: ['fitness', 'health']
   },
   {
-    title: 'test title 7',
-    content: 'test content 7',
-    tags: ['test tag 8', 'test tag 9']
+    translations: [
+      {
+        title: 'Mental Health',
+        content: 'Taking care of your mind.',
+        language: LanguagesEnum.EN
+      },
+      {
+        title: 'Duševní zdraví',
+        content: 'Péče o vaši mysl.',
+        language: LanguagesEnum.CS
+      }
+    ],
+    tags: ['mental health', 'wellness']
   },
   {
-    title: 'test title 8',
-    content: 'test content 8',
-    tags: ['test tag 8', 'test tag 9']
+    translations: [
+      {
+        title: 'Photography Tips',
+        content: 'Capture the moment.',
+        language: LanguagesEnum.EN
+      },
+      {
+        title: 'Tipy na fotografování',
+        content: 'Zachyťte okamžik.',
+        language: LanguagesEnum.CS
+      }
+    ],
+    tags: ['photography', 'art']
   },
   {
-    title: 'test title 9',
-    content: 'test content 9',
-    tags: ['test tag 8', 'test tag 9']
+    translations: [
+      {
+        title: 'Gaming World',
+        content: 'Latest in the gaming world.',
+        language: LanguagesEnum.EN
+      },
+      {
+        title: 'Herní svět',
+        content: 'Nejnovější v herním světě.',
+        language: LanguagesEnum.CS
+      }
+    ],
+    tags: ['gaming', 'entertainment']
   },
   {
-    title: 'test title 10',
-    content: 'test content 10',
-    tags: ['test tag 8', 'test tag 9']
+    translations: [
+      {
+        title: 'Sustainable Living',
+        content: 'Eco-friendly lifestyle.',
+        language: LanguagesEnum.EN
+      },
+      {
+        title: 'Udržitelný život',
+        content: 'Ekologický životní styl.',
+        language: LanguagesEnum.CS
+      }
+    ],
+    tags: ['sustainability', 'eco-friendly']
   },
   {
-    title: 'test title 11',
-    content: 'test content 11',
-    tags: ['test tag 8', 'test tag 9']
+    translations: [
+      {
+        title: 'Music Genres',
+        content: 'Exploring different types of music.',
+        language: LanguagesEnum.EN
+      },
+      {
+        title: 'Hudební žánry',
+        content: 'Prozkoumání různých typů hudby.',
+        language: LanguagesEnum.CS
+      }
+    ],
+    tags: ['music', 'genres']
+  },
+  {
+    translations: [
+      {
+        title: 'Movie Reviews',
+        content: 'Latest movie reviews.',
+        language: LanguagesEnum.EN
+      },
+      {
+        title: 'Recenze filmů',
+        content: 'Nejnovější recenze filmů.',
+        language: LanguagesEnum.CS
+      }
+    ],
+    tags: ['movies', 'reviews']
+  },
+  {
+    translations: [
+      {
+        title: 'Book Recommendations',
+        content: 'Books you should read.',
+        language: LanguagesEnum.EN
+      }
+    ],
+    tags: ['books', 'recommendations']
+  },
+  {
+    translations: [
+      {
+        title: 'Pet Care',
+        content: 'Taking care of your pets.',
+        language: LanguagesEnum.EN
+      },
+      {
+        title: 'Péče o mazlíčky',
+        content: 'Péče o vaše mazlíčky.',
+        language: LanguagesEnum.CS
+      }
+    ],
+    tags: ['pets', 'care']
+  },
+  {
+    translations: [
+      {
+        title: 'Investing Basics',
+        content: 'Introduction to investing.',
+        language: LanguagesEnum.EN
+      },
+      {
+        title: 'Základy investování',
+        content: 'Úvod do investování.',
+        language: LanguagesEnum.CS
+      }
+    ],
+    tags: ['investing', 'finance']
   }
 ];
 
 export const blogTest: CreateBlogDto = {
-  title: 'test title',
-  content: 'test content',
-  tags: ['test tag 1', 'test tag 2']
+  translations: [
+    {
+      title: 'Programming 101',
+      content: 'Introduction to programming.',
+      language: LanguagesEnum.EN
+    },
+    {
+      title: 'Programování 101',
+      content: 'Úvod do programování.',
+      language: LanguagesEnum.CS
+    }
+  ],
+  tags: ['programming', 'technology']
+};
+
+export const blogTest2: CreateBlogDto = {
+  translations: [
+    {
+      title: 'Gaming World',
+      content: 'Latest in the gaming world.',
+      language: LanguagesEnum.EN
+    },
+    {
+      title: 'Herní svět',
+      content: 'Nejnovější v herním světě.',
+      language: LanguagesEnum.CS
+    }
+  ],
+  tags: ['gaming', 'entertainment']
+};
+
+export const blogTestWithCsTranslation: CreateBlogDto = {
+  translations: [
+    {
+      title: 'Python to je stačka',
+      content: 'Neprogramuj v pythonu pokud máš soudnost',
+      language: LanguagesEnum.CS
+    }
+  ],
+  tags: ['python', 'shit']
+};
+
+export const blogTestWithEnTranslation: CreateBlogDto = {
+  translations: [
+    {
+      title: 'GO for the win',
+      content: 'Title is self explaining',
+      language: LanguagesEnum.EN
+    }
+  ],
+  tags: ['go', 'supremacy']
 };

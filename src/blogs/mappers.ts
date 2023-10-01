@@ -1,36 +1,86 @@
-import { BlogDto } from './dtos/blog.dto';
+import { CreatedBlogDto, BlogDto, UpdatedBlogDto } from './dtos/blog.dto';
 import { BlogEntity } from './entities/Blog.entity';
-import { CreateBlogDto } from './dtos/createBlog.dto';
-import { UpdateBlogDto } from './dtos/updateBlog.dto';
+import { CreateBlogTranslationDto } from './dtos/createBlogTranslation.dto';
+import { BlogTranslationEntity } from './entities/BlogTranslation.entity';
+import { LanguagesEnum } from '../shared/enums/languages.enum';
+import { UpdateBlogTranslationDto } from './dtos/updateBlogTranslation.dto';
 
 export class Mappers {
-  static blogEntityToBlogDto(blogEntity: BlogEntity): BlogDto {
+  static blogEntityToBlogDto(
+    blogEntity: BlogEntity,
+    language: LanguagesEnum
+  ): BlogDto {
     return {
       id: blogEntity.externalId,
-      title: blogEntity.title,
-      content: blogEntity.content,
+      title: blogEntity.translations[0].title,
+      content: blogEntity.translations[0].content,
       tags: blogEntity.tags,
-      created: blogEntity.created
+      created: blogEntity.created,
+      language
     };
   }
 
-  static createBlogDtoToBlogEntity(createBlogDto: CreateBlogDto): BlogEntity {
-    return this.convertCreateUpdateDto(createBlogDto);
+  static blogEntityToCreatedBlogDto(blogEntity: BlogEntity): CreatedBlogDto {
+    return this.convertCreatedUpdatedDto(blogEntity);
   }
 
-  static updateBlogDtoToBlogEntity(updateBlogDto: UpdateBlogDto): BlogEntity {
-    return this.convertCreateUpdateDto(updateBlogDto);
+  static blogEntityToUpdatedBlogDto(blogEntity: BlogEntity): UpdatedBlogDto {
+    return this.convertCreatedUpdatedDto(blogEntity);
   }
 
-  private static convertCreateUpdateDto(
-    createUpdateDto: CreateBlogDto | UpdateBlogDto
-  ): BlogEntity {
-    const blog = new BlogEntity();
+  static createBlogTranslationDtoToBlogTranslationEntity(
+    createTranslationDto: CreateBlogTranslationDto,
+    blogEntity: BlogEntity
+  ): BlogTranslationEntity {
+    const blogTranslation = new BlogTranslationEntity();
 
-    blog.title = createUpdateDto.title;
-    blog.content = createUpdateDto.content;
-    blog.tags = createUpdateDto.tags;
+    blogTranslation.title = createTranslationDto.title;
+    blogTranslation.content = createTranslationDto.content;
+    blogTranslation.language = createTranslationDto.language;
+    blogTranslation.blog = blogEntity;
 
-    return blog;
+    return blogTranslation;
+  }
+
+  static updateBlogTranslationDtoToBlogTranslationEntity(
+    updateTranslationDto: UpdateBlogTranslationDto,
+    blogEntity: BlogEntity
+  ): BlogTranslationEntity {
+    let translationEntity = blogEntity.translations.find(
+      (t) => t.language === updateTranslationDto.language
+    );
+
+    if (!translationEntity) {
+      // If translation does not exist, create a new one
+      translationEntity = new BlogTranslationEntity();
+      translationEntity.language = updateTranslationDto.language;
+      translationEntity.blog = blogEntity;
+    }
+
+    // Update the fields
+    if (updateTranslationDto.title) {
+      translationEntity.title = updateTranslationDto.title;
+    }
+
+    if (updateTranslationDto.content) {
+      translationEntity.content = updateTranslationDto.content;
+    }
+
+    return translationEntity;
+  }
+
+  private static convertCreatedUpdatedDto(
+    blogEntity: BlogEntity
+  ): CreatedBlogDto | UpdatedBlogDto {
+    return {
+      id: blogEntity.externalId,
+      tags: blogEntity.tags,
+      created: blogEntity.created,
+      translations: blogEntity.translations.map((translation) => ({
+        title: translation.title,
+        content: translation.content,
+        language: translation.language
+      }))
+    };
   }
 }

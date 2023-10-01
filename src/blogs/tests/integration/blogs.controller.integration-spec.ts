@@ -11,16 +11,50 @@ import { Repository } from 'typeorm';
 import { CreateBlogDto } from '../../dtos/createBlog.dto';
 import { UpdateBlogDto } from '../../dtos/updateBlog.dto';
 import { PaginationDto } from '../../dtos/pagination.dto';
-import { blogTestArray, blogTest } from '../../../shared/test/blog-test-data';
-
+import {
+  blogTestArray,
+  blogTest,
+  blogTest2,
+  blogTestWithEnTranslation,
+  blogTestWithCsTranslation
+} from '../../../shared/test/blog-test-data';
+import { LanguagesEnum } from '../../../shared/enums/languages.enum';
+import { BlogTranslationDto } from '../../dtos/blog.dto';
+import { BlogTranslationEntity } from '../../entities/BlogTranslation.entity';
+import { Mappers } from '../../mappers';
 describe('BlogsController (integration)', () => {
   let app: INestApplication;
   let pgContainer: StartedTestContainer;
   let blogRepository: Repository<BlogEntity>;
+  let blogTranslationRepository: Repository<BlogTranslationEntity>;
 
   const seedDatabase = async function (data: CreateBlogDto[]): Promise<void> {
-    const entities = data.map((blog) => blogRepository.create(blog));
-    await blogRepository.save(entities);
+    for (const blogData of data) {
+      await createBlog(blogData);
+    }
+  };
+
+  const createBlog = async function (
+    blogData: CreateBlogDto
+  ): Promise<BlogEntity> {
+    const blogEntity = new BlogEntity();
+    blogEntity.tags = blogData.tags;
+
+    const savedBlogEntity = await blogRepository.save(blogEntity);
+
+    for (const translation of blogData.translations) {
+      const blogTranslationEntity =
+        Mappers.createBlogTranslationDtoToBlogTranslationEntity(
+          translation,
+          savedBlogEntity
+        );
+
+      await blogTranslationRepository.save(blogTranslationEntity);
+    }
+
+    return await blogRepository.findOneBy({
+      externalId: savedBlogEntity.externalId
+    });
   };
 
   beforeAll(async () => {
@@ -33,9 +67,9 @@ describe('BlogsController (integration)', () => {
       imports: [
         TypeOrmModule.forRoot({
           ...ConfigTestHelper.prepareTypeOrmOptions(pgContainer),
-          entities: [BlogEntity]
+          entities: [BlogEntity, BlogTranslationEntity]
         }),
-        TypeOrmModule.forFeature([BlogEntity])
+        TypeOrmModule.forFeature([BlogEntity, BlogTranslationEntity])
       ],
       providers: [BlogsService],
       controllers: [BlogsController]
@@ -48,10 +82,14 @@ describe('BlogsController (integration)', () => {
     blogRepository = moduleFixture.get<Repository<BlogEntity>>(
       getRepositoryToken(BlogEntity)
     );
+    blogTranslationRepository = moduleFixture.get<
+      Repository<BlogTranslationEntity>
+    >(getRepositoryToken(BlogTranslationEntity));
   }, 60000);
 
   afterEach(async () => {
-    await blogRepository.clear();
+    await blogTranslationRepository.delete({});
+    await blogRepository.delete({});
   });
 
   afterAll(async () => {
@@ -71,8 +109,10 @@ describe('BlogsController (integration)', () => {
 
       // Assert
       expect(response.status).toBe(HttpStatus.CREATED);
-      expect(response.body.title).toBe(createBlogDto.title);
-      expect(response.body.content).toBe(createBlogDto.content);
+      expect(response.body.id).toBeDefined();
+      expect(response.body.translations).toEqual(
+        expect.arrayContaining(createBlogDto.translations)
+      );
       expect(response.body.tags).toEqual(
         expect.arrayContaining(createBlogDto.tags)
       );
@@ -81,7 +121,7 @@ describe('BlogsController (integration)', () => {
 
     it('should return 400 if blog data is not valid', async () => {
       // Arrange
-      const createBlogDto: CreateBlogDto = { ...blogTest, title: '' };
+      const createBlogDto: CreateBlogDto = { translations: [], tags: [] };
 
       // Act
       const response = await request(app.getHttpServer())
@@ -104,6 +144,41 @@ describe('BlogsController (integration)', () => {
       // Assert
       expect(response.status).toBe(HttpStatus.BAD_REQUEST);
     });
+
+    it('should return 400 when translations is empty', async () => {
+      // Arrange
+      const createBlogDto: CreateBlogDto = { ...blogTest, translations: [] };
+
+      // Act
+      const response = await request(app.getHttpServer())
+        .post('/blogs')
+        .send(createBlogDto);
+
+      // Assert
+      expect(response.status).toBe(HttpStatus.BAD_REQUEST);
+    });
+
+    it('should return 400 when translations language is not from enum', async () => {
+      // Arrange
+      const createBlogDto: CreateBlogDto = {
+        ...blogTest,
+        translations: [
+          {
+            title: 'Programming 101',
+            content: 'Introduction to programming.',
+            language: 'invalid-language' as LanguagesEnum
+          }
+        ]
+      };
+
+      // Act
+      const response = await request(app.getHttpServer())
+        .post('/blogs')
+        .send(createBlogDto);
+
+      // Assert
+      expect(response.status).toBe(HttpStatus.BAD_REQUEST);
+    });
   });
 
   describe('POST /blogs/all', () => {
@@ -112,7 +187,9 @@ describe('BlogsController (integration)', () => {
       await seedDatabase(blogTestArray);
 
       // Act
-      const response = await request(app.getHttpServer()).post('/blogs/all');
+      const response = await request(app.getHttpServer()).post(
+        '/blogs/all?lang=cs'
+      );
 
       // Assert
       expect(response.status).toBe(HttpStatus.OK);
@@ -129,7 +206,7 @@ describe('BlogsController (integration)', () => {
 
       // Act
       const response = await request(app.getHttpServer())
-        .post('/blogs/all')
+        .post('/blogs/all?lang=en')
         .send(pagination);
 
       // Assert
@@ -139,7 +216,9 @@ describe('BlogsController (integration)', () => {
 
     it('should return empty array if no blogs', async () => {
       // Act
-      const response = await request(app.getHttpServer()).post('/blogs/all');
+      const response = await request(app.getHttpServer()).post(
+        '/blogs/all?lang=en'
+      );
 
       // Assert
       expect(response.status).toBe(HttpStatus.OK);
@@ -148,29 +227,44 @@ describe('BlogsController (integration)', () => {
   });
 
   describe('GET /blogs/:id', () => {
-    it('should return a specific blog by ID', async () => {
+    it('should return a specific blog by ID and language', async () => {
       // Arrange
-      const testBlog = await blogRepository.save({ ...blogTest });
+      const testBlog = await createBlog({ ...blogTest });
 
       // Act
       const response = await request(app.getHttpServer()).get(
-        `/blogs/${testBlog.externalId}`
+        `/blogs/${testBlog.externalId}?lang=${LanguagesEnum.EN}`
       );
 
       // Assert
       expect(response.status).toBe(HttpStatus.OK);
-      expect(response.body.title).toBe(testBlog.title);
-      expect(response.body.content).toBe(testBlog.content);
+      expect(response.body.id).toBe(testBlog.externalId);
+      expect(response.body.title).toBe(testBlog.translations[0].title);
+      expect(response.body.content).toBe(testBlog.translations[0].content);
+      expect(response.body.language).toBe(testBlog.translations[0].language);
       expect(response.body.tags).toEqual(expect.arrayContaining(testBlog.tags));
     });
 
     it('should return 404 if blog is not found', async () => {
       // Arrange
-      const nonExistentId = 'd490f97f-b5ed-4e7b-adfb-ae5c718a5f57';
+      const nonExistingId = 'd490f97f-b5ed-4e7b-adfb-ae5c718a5f57';
 
       // Act
       const response = await request(app.getHttpServer()).get(
-        `/blogs/${nonExistentId}`
+        `/blogs/${nonExistingId}?lang=${LanguagesEnum.EN}`
+      );
+
+      // Assert
+      expect(response.status).toBe(HttpStatus.NOT_FOUND);
+    });
+
+    it('should return 404 when blog has no translation for the language', async () => {
+      // Arrange
+      const testBlog = await createBlog({ ...blogTestWithEnTranslation });
+
+      // Act
+      const response = await request(app.getHttpServer()).get(
+        `/blogs/${testBlog.externalId}?lang=${LanguagesEnum.CS}`
       );
 
       // Assert
@@ -183,7 +277,7 @@ describe('BlogsController (integration)', () => {
 
       // Act
       const response = await request(app.getHttpServer()).get(
-        `/blogs/${invalidId}`
+        `/blogs/${invalidId}?lang=${LanguagesEnum.EN}`
       );
 
       // Assert
@@ -196,10 +290,45 @@ describe('BlogsController (integration)', () => {
       // Arrange
       const testBlog = await blogRepository.save({ ...blogTest });
 
+      const updateBlogData: UpdateBlogDto = { ...blogTest2 };
+
+      // Act
+      const response = await request(app.getHttpServer())
+        .put(`/blogs/${testBlog.externalId}`)
+        .send({ ...updateBlogData });
+
+      // Assert
+      expect(response.status).toBe(HttpStatus.OK);
+      expect(response.body.id).toBe(testBlog.externalId);
+      expect(response.body.translations[0].title).toBe(
+        updateBlogData.translations[0].title
+      );
+      expect(response.body.translations[0].content).toBe(
+        updateBlogData.translations[0].content
+      );
+      expect(response.body.translations[0].language).toBe(
+        updateBlogData.translations[0].language
+      );
+      expect(response.body.translations[1].title).toBe(
+        updateBlogData.translations[1].title
+      );
+      expect(response.body.translations[1].content).toBe(
+        updateBlogData.translations[1].content
+      );
+      expect(response.body.translations[1].language).toBe(
+        updateBlogData.translations[1].language
+      );
+      expect(response.body.tags).toEqual(
+        expect.arrayContaining(updateBlogData.tags)
+      );
+    });
+
+    it('should add new language translation if did not exist', async () => {
+      // Arrange
+      const testBlog = await createBlog({ ...blogTestWithEnTranslation });
+
       const updateBlogData: UpdateBlogDto = {
-        title: 'Updated Title',
-        content: 'Updated Content',
-        tags: ['updated']
+        translations: blogTestWithCsTranslation.translations
       };
 
       // Act
@@ -209,40 +338,24 @@ describe('BlogsController (integration)', () => {
 
       // Assert
       expect(response.status).toBe(HttpStatus.OK);
-      expect(response.body.title).toBe(updateBlogData.title);
-      expect(response.body.content).toBe(updateBlogData.content);
-      expect(response.body.tags).toEqual(
-        expect.arrayContaining(updateBlogData.tags)
+      expect(response.body.id).toBe(testBlog.externalId);
+      expect(response.body.translations.length).toBe(2);
+
+      const translationCS = response.body.translations.find(
+        (translation: BlogTranslationDto) =>
+          translation.language === LanguagesEnum.CS
       );
 
-      // Araange
-      const updateBlogTitle: UpdateBlogDto = {
-        title: 'Updated Title 2'
-      };
-
-      // Act
-      const responseWithUpdatedTitle = await request(app.getHttpServer())
-        .put(`/blogs/${testBlog.externalId}`)
-        .send({ ...updateBlogTitle });
-
-      // Assert
-      expect(response.status).toBe(HttpStatus.OK);
-      expect(responseWithUpdatedTitle.body.title).toBe(updateBlogTitle.title);
-      expect(responseWithUpdatedTitle.body.content).toBe(
-        updateBlogData.content
-      );
-      expect(responseWithUpdatedTitle.body.tags).toEqual(
-        expect.arrayContaining(updateBlogData.tags)
-      );
+      expect(translationCS).toEqual(updateBlogData.translations[0]);
     });
 
     it('should return 404 if blog is not found', async () => {
       // Arrange
-      const nonExistentId = 'd490f97f-b5ed-4e7b-adfb-ae5c718a5f57';
+      const nonExistingId = 'd490f97f-b5ed-4e7b-adfb-ae5c718a5f57';
 
       // Act
       const response = await request(app.getHttpServer())
-        .put(`/blogs/${nonExistentId}`)
+        .put(`/blogs/${nonExistingId}`)
         .send({ ...blogTest });
 
       // Assert
