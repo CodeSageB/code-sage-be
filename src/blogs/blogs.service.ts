@@ -4,7 +4,7 @@ import { UpdateBlogDto } from './dtos/updateBlog.dto';
 import { PaginationDto } from './dtos/pagination.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { BlogEntity } from './entities/Blog.entity';
-import { DeleteResult, Repository } from 'typeorm';
+import { DataSource, DeleteResult, Repository } from 'typeorm';
 import { Mappers } from './mappers';
 import { BlogTranslationEntity } from './entities/BlogTranslation.entity';
 import { LanguagesEnum } from '../shared/enums/languages.enum';
@@ -15,28 +15,43 @@ export class BlogsService {
     @InjectRepository(BlogEntity)
     private readonly blogRepository: Repository<BlogEntity>,
     @InjectRepository(BlogTranslationEntity)
-    private readonly blogTranslationRepository: Repository<BlogTranslationEntity>
+    private readonly blogTranslationRepository: Repository<BlogTranslationEntity>,
+    private dataSource: DataSource
   ) {}
 
   public async createBlog(blogData: CreateBlogDto): Promise<BlogEntity> {
-    const blogEntity = new BlogEntity();
-    blogEntity.tags = blogData.tags;
+    const queryRunner = this.dataSource.createQueryRunner();
 
-    const savedBlogEntity = await this.blogRepository.save(blogEntity);
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
 
-    for (const translation of blogData.translations) {
-      const blogTranslationEntity =
-        Mappers.createBlogTranslationDtoToBlogTranslationEntity(
-          translation,
-          savedBlogEntity
-        );
+    try {
+      const blogEntity = new BlogEntity();
+      blogEntity.tags = blogData.tags;
 
-      await this.blogTranslationRepository.save(blogTranslationEntity);
+      const savedBlogEntity = await queryRunner.manager.save(blogEntity);
+
+      for (const translation of blogData.translations) {
+        const blogTranslationEntity =
+          Mappers.createBlogTranslationDtoToBlogTranslationEntity(
+            translation,
+            savedBlogEntity
+          );
+
+        await queryRunner.manager.save(blogTranslationEntity);
+      }
+
+      await queryRunner.commitTransaction();
+
+      return await this.blogRepository.findOneBy({
+        externalId: savedBlogEntity.externalId
+      });
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      throw err;
+    } finally {
+      await queryRunner.release();
     }
-
-    return await this.blogRepository.findOneBy({
-      externalId: savedBlogEntity.externalId
-    });
   }
 
   public async fetchBlogs(
@@ -82,36 +97,48 @@ export class BlogsService {
     blogData: UpdateBlogDto
   ): Promise<BlogEntity> {
     const blogEntity = await this.blogRepository.findOne({
-      where: { externalId: uuid },
-      relations: ['translations']
+      where: { externalId: uuid }
     });
 
     if (!blogEntity) {
       throw new NotFoundException('Blog not found');
     }
 
-    if (blogData.tags) {
-      blogEntity.tags = blogData.tags;
-    }
+    const queryRunner = this.dataSource.createQueryRunner();
 
-    await this.blogRepository.save(blogEntity);
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
 
-    // Update translations
-    if (blogData.translations) {
-      for (const translationData of blogData.translations) {
-        await this.blogTranslationRepository.save(
-          Mappers.updateBlogTranslationDtoToBlogTranslationEntity(
-            translationData,
-            blogEntity
-          )
-        );
+    try {
+      if (blogData.tags) {
+        blogEntity.tags = blogData.tags;
       }
-    }
 
-    //Refresh the entity
-    return await this.blogRepository.findOneBy({
-      externalId: uuid
-    });
+      await queryRunner.manager.save(blogEntity);
+
+      // Update translations
+      if (blogData.translations) {
+        for (const translationData of blogData.translations) {
+          await queryRunner.manager.save(
+            Mappers.updateBlogTranslationDtoToBlogTranslationEntity(
+              translationData,
+              blogEntity
+            )
+          );
+        }
+      }
+      await queryRunner.commitTransaction();
+
+      //Refresh the entity
+      return await this.blogRepository.findOneBy({
+        externalId: uuid
+      });
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      throw err;
+    } finally {
+      await queryRunner.release();
+    }
   }
 
   public deleteBlog(uuid: string): Promise<DeleteResult> {
