@@ -19,7 +19,12 @@ import { BlogsService } from './blogs.service';
 import { UpdateBlogDto } from './dtos/updateBlog.dto';
 import { PaginationDto } from './dtos/pagination.dto';
 import { Mappers } from './mappers';
-import { CreatedBlogDto, BlogDto, UpdatedBlogDto } from './dtos/blog.dto';
+import {
+  CreatedBlogDto,
+  BlogDto,
+  UpdatedBlogDto,
+  BlogList
+} from './dtos/blog.dto';
 import { LanguageDto } from '../shared/dtos/language.dto';
 
 @Controller('blogs')
@@ -43,12 +48,17 @@ export class BlogsController {
   @UsePipes(new ValidationPipe({ transform: true }))
   @HttpCode(200)
   async getBlogs(
-    @Body() paginationDto: PaginationDto,
+    @Body() pagination: PaginationDto,
     @Query() lang: LanguageDto
-  ): Promise<BlogDto[]> {
-    const blogs = await this.blogService.fetchBlogs(paginationDto, lang.lang);
+  ): Promise<BlogList> {
+    const blogList = await this.blogService.fetchBlogs(pagination, lang.lang);
 
-    return blogs.map((blog) => Mappers.blogEntityToBlogDto(blog, lang.lang));
+    return {
+      totalCount: blogList.totalCount,
+      blogs: blogList.blogs.map((b) =>
+        Mappers.blogEntityToBlogDto(b, lang.lang)
+      )
+    };
   }
 
   @Get(':id')

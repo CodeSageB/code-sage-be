@@ -57,19 +57,21 @@ export class BlogsService {
   public async fetchBlogs(
     paginationDto: PaginationDto,
     lang: LanguagesEnum
-  ): Promise<BlogEntity[]> {
+  ): Promise<{ blogs: BlogEntity[]; totalCount: number }> {
     const queryBuilder = this.blogRepository.createQueryBuilder('blog');
 
     // Join with BlogTranslation entity
-    queryBuilder.leftJoinAndSelect('blog.translations', 'translation');
+    queryBuilder.innerJoinAndSelect('blog.translations', 'translation');
 
     // Filter by language
     queryBuilder.where('translation.language = :lang', { lang: lang });
 
     // Apply pagination
-    queryBuilder.take(paginationDto.take);
+    queryBuilder.take(paginationDto.take * paginationDto.page);
 
-    return await queryBuilder.getMany();
+    const totalCount = await queryBuilder.getCount();
+    const blogs = await queryBuilder.getMany();
+    return { blogs, totalCount };
   }
 
   public async fetchBlog(
