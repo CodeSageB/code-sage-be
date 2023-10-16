@@ -6,16 +6,14 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { BlogEntity } from './entities/Blog.entity';
 import { DataSource, DeleteResult, Repository } from 'typeorm';
 import { Mappers } from './mappers';
-import { BlogTranslationEntity } from './entities/BlogTranslation.entity';
 import { LanguagesEnum } from '../shared/enums/languages.enum';
+import { TagEntity } from './entities/Tag.entity';
 
 @Injectable()
 export class BlogsService {
   constructor(
     @InjectRepository(BlogEntity)
     private readonly blogRepository: Repository<BlogEntity>,
-    @InjectRepository(BlogTranslationEntity)
-    private readonly blogTranslationRepository: Repository<BlogTranslationEntity>,
     private dataSource: DataSource
   ) {}
 
@@ -27,9 +25,14 @@ export class BlogsService {
 
     try {
       const blogEntity = new BlogEntity();
-      blogEntity.tags = blogData.tags;
-
       const savedBlogEntity = await queryRunner.manager.save(blogEntity);
+
+      for (const tag of blogData.tags) {
+        const tagEntity = new TagEntity();
+        tagEntity.tag = tag;
+        tagEntity.blog = blogEntity;
+        await queryRunner.manager.save(tagEntity);
+      }
 
       for (const translation of blogData.translations) {
         const blogTranslationEntity =
@@ -61,7 +64,10 @@ export class BlogsService {
     const queryBuilder = this.blogRepository.createQueryBuilder('blog');
 
     // Join with BlogTranslation entity
-    queryBuilder.innerJoinAndSelect('blog.translations', 'translation');
+    queryBuilder.leftJoinAndSelect('blog.translations', 'translation');
+
+    // Join with Tag entity
+    queryBuilder.leftJoinAndSelect('blog.tags', 'tag'); // This line is new
 
     // Filter by language
     queryBuilder.where('translation.language = :lang', { lang: lang });
@@ -74,6 +80,7 @@ export class BlogsService {
     return { blogs, totalCount };
   }
 
+  //TODO upravit fetchBlog aby vracel tags
   public async fetchBlog(
     uuid: string,
     lang: LanguagesEnum
@@ -112,11 +119,16 @@ export class BlogsService {
     await queryRunner.startTransaction();
 
     try {
-      if (blogData.tags) {
-        blogEntity.tags = blogData.tags;
-      }
-
       await queryRunner.manager.save(blogEntity);
+
+      if (blogData.tags) {
+        for (const tag of blogData.tags) {
+          const tagEntity = new TagEntity();
+          tagEntity.tag = tag;
+          tagEntity.blog = blogEntity;
+          await queryRunner.manager.save(tagEntity);
+        }
+      }
 
       // Update translations
       if (blogData.translations) {

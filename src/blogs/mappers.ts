@@ -14,7 +14,7 @@ export class Mappers {
       id: blogEntity.externalId,
       title: blogEntity.translations[0].title,
       content: blogEntity.translations[0].content,
-      tags: blogEntity.tags,
+      tags: blogEntity.tags.map((tag) => tag.tag),
       created: blogEntity.created,
       language
     };
@@ -74,7 +74,7 @@ export class Mappers {
   ): CreatedBlogDto | UpdatedBlogDto {
     return {
       id: blogEntity.externalId,
-      tags: blogEntity.tags,
+      tags: blogEntity.tags.map((tag) => tag.tag),
       created: blogEntity.created,
       translations: blogEntity.translations.map((translation) => ({
         title: translation.title,

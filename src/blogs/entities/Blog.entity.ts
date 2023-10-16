@@ -8,6 +8,7 @@ import {
   UpdateDateColumn
 } from 'typeorm';
 import { BlogTranslationEntity } from './BlogTranslation.entity';
+import { TagEntity } from './Tag.entity';
 
 @Entity('Blog')
 export class BlogEntity {
@@ -17,9 +18,6 @@ export class BlogEntity {
   @Column()
   @Generated('uuid')
   externalId: string;
-
-  @Column('text', { array: true })
-  tags: string[];
 
   @CreateDateColumn({ type: 'timestamptz' })
   created: Date;
@@ -31,4 +29,9 @@ export class BlogEntity {
     eager: true
   })
   translations: BlogTranslationEntity[];
+
+  @OneToMany(() => TagEntity, (tag) => tag.blog, {
+    eager: true
+  })
+  tags: TagEntity[];
 }
