@@ -95,6 +95,8 @@ export class BlogsService {
       { lang: lang }
     );
 
+    queryBuilder.leftJoinAndSelect('blog.tags', 'tag');
+
     // Filter by externalId
     queryBuilder.where('blog.externalId = :uuid', { uuid });
 

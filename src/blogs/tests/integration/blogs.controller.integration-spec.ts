@@ -19,14 +19,16 @@ import {
   blogTestWithCsTranslation
 } from '../../../shared/test/blog-test-data';
 import { LanguagesEnum } from '../../../shared/enums/languages.enum';
-import { BlogTranslationDto } from '../../dtos/blog.dto';
+import { BlogList, BlogTranslationDto } from '../../dtos/blog.dto';
 import { BlogTranslationEntity } from '../../entities/BlogTranslation.entity';
 import { Mappers } from '../../mappers';
+import { TagEntity } from '../../entities/Tag.entity';
 describe('BlogsController (integration)', () => {
   let app: INestApplication;
   let pgContainer: StartedTestContainer;
   let blogRepository: Repository<BlogEntity>;
   let blogTranslationRepository: Repository<BlogTranslationEntity>;
+  let tagsRepository: Repository<TagEntity>;
 
   const seedDatabase = async function (data: CreateBlogDto[]): Promise<void> {
     for (const blogData of data) {
@@ -34,13 +36,23 @@ describe('BlogsController (integration)', () => {
     }
   };
 
+  const prepareTags = function (blog: BlogEntity, tags: string[]): TagEntity[] {
+    return tags.map((tag) => {
+      const tagEntity = new TagEntity();
+      tagEntity.tag = tag;
+      tagEntity.blog = blog;
+      return tagEntity;
+    });
+  };
+
   const createBlog = async function (
     blogData: CreateBlogDto
   ): Promise<BlogEntity> {
     const blogEntity = new BlogEntity();
-    blogEntity.tags = blogData.tags;
-
     const savedBlogEntity = await blogRepository.save(blogEntity);
+
+    const tags = prepareTags(savedBlogEntity, blogData.tags);
+    await tagsRepository.save(tags);
 
     for (const translation of blogData.translations) {
       const blogTranslationEntity =
@@ -67,9 +79,9 @@ describe('BlogsController (integration)', () => {
       imports: [
         TypeOrmModule.forRoot({
           ...ConfigTestHelper.prepareTypeOrmOptions(pgContainer),
-          entities: [BlogEntity, BlogTranslationEntity]
+          entities: [BlogEntity, BlogTranslationEntity, TagEntity]
         }),
-        TypeOrmModule.forFeature([BlogEntity, BlogTranslationEntity])
+        TypeOrmModule.forFeature([BlogEntity, BlogTranslationEntity, TagEntity])
       ],
       providers: [BlogsService],
       controllers: [BlogsController]
@@ -85,6 +97,9 @@ describe('BlogsController (integration)', () => {
     blogTranslationRepository = moduleFixture.get<
       Repository<BlogTranslationEntity>
     >(getRepositoryToken(BlogTranslationEntity));
+    tagsRepository = moduleFixture.get<Repository<TagEntity>>(
+      getRepositoryToken(TagEntity)
+    );
   }, 60000);
 
   afterEach(async () => {
@@ -191,9 +206,11 @@ describe('BlogsController (integration)', () => {
         '/blogs/all?lang=cs'
       );
 
+      const blogList = response.body as BlogList;
+
       // Assert
       expect(response.status).toBe(HttpStatus.OK);
-      expect(response.body.length).toBe(10);
+      expect(blogList.blogs.length).toBe(10);
     });
 
     it('should return blogs according to pagination', async () => {
@@ -201,6 +218,7 @@ describe('BlogsController (integration)', () => {
       await seedDatabase(blogTestArray);
 
       const pagination: PaginationDto = {
+        page: 1,
         take: 5
       };
 
@@ -209,9 +227,32 @@ describe('BlogsController (integration)', () => {
         .post('/blogs/all?lang=en')
         .send(pagination);
 
+      const blogList = response.body as BlogList;
+
       // Assert
       expect(response.status).toBe(HttpStatus.OK);
-      expect(response.body.length).toBe(pagination.take);
+      expect(blogList.blogs.length).toBe(pagination.take);
+    });
+
+    it('should return blogs according to pagination on another page', async () => {
+      // Arrange
+      await seedDatabase(blogTestArray);
+
+      const pagination: PaginationDto = {
+        page: 2,
+        take: 5
+      };
+
+      // Act
+      const response = await request(app.getHttpServer())
+        .post('/blogs/all?lang=en')
+        .send(pagination);
+
+      const blogList = response.body as BlogList;
+
+      // Assert
+      expect(response.status).toBe(HttpStatus.OK);
+      expect(blogList.blogs.length).toBe(pagination.take * pagination.page);
     });
 
     it('should return empty array if no blogs', async () => {
@@ -220,9 +261,11 @@ describe('BlogsController (integration)', () => {
         '/blogs/all?lang=en'
       );
 
+      const blogList = response.body as BlogList;
+
       // Assert
       expect(response.status).toBe(HttpStatus.OK);
-      expect(response.body.length).toBe(0);
+      expect(blogList.blogs.length).toBe(0);
     });
   });
 
@@ -242,7 +285,9 @@ describe('BlogsController (integration)', () => {
       expect(response.body.title).toBe(testBlog.translations[0].title);
       expect(response.body.content).toBe(testBlog.translations[0].content);
       expect(response.body.language).toBe(testBlog.translations[0].language);
-      expect(response.body.tags).toEqual(expect.arrayContaining(testBlog.tags));
+      expect(response.body.tags).toEqual(
+        expect.arrayContaining(testBlog.tags.map((tag) => tag.tag))
+      );
     });
 
     it('should return 404 if blog is not found', async () => {
@@ -288,7 +333,7 @@ describe('BlogsController (integration)', () => {
   describe('UPDATE /blogs/:id', () => {
     it('should update a specific blog by ID', async () => {
       // Arrange
-      const testBlog = await blogRepository.save({ ...blogTest });
+      const testBlog = await blogRepository.save({});
 
       const updateBlogData: UpdateBlogDto = { ...blogTest2 };
 
@@ -379,7 +424,7 @@ describe('BlogsController (integration)', () => {
   describe('DELETE /blogs/:id', () => {
     it('should delete a specific blog by ID', async () => {
       // Arrange
-      const testBlog = await blogRepository.save({ ...blogTest });
+      const testBlog = await createBlog({ ...blogTest });
 
       // Act
       const response = await request(app.getHttpServer()).delete(
@@ -405,7 +450,7 @@ describe('BlogsController (integration)', () => {
 
     it('should return 404 when deleting blog that had been deleted', async () => {
       // Arrange
-      const testBlog = await blogRepository.save({ ...blogTest });
+      const testBlog = await createBlog({ ...blogTest });
 
       // Act
       const response = await request(app.getHttpServer()).delete(

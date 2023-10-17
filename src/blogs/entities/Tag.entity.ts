@@ -9,6 +9,8 @@ export class TagEntity {
   @Column()
   tag: string;
 
-  @ManyToOne(() => BlogEntity, (blog) => blog.tags)
+  @ManyToOne(() => BlogEntity, (blog) => blog.tags, {
+    onDelete: 'CASCADE'
+  })
   blog: BlogEntity;
 }

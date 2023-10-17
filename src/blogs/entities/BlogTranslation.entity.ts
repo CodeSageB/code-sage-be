@@ -21,7 +21,9 @@ export class BlogTranslationEntity {
   @Column({ type: 'text' })
   content: string;
 
-  @ManyToOne(() => BlogEntity, (blog) => blog.translations)
+  @ManyToOne(() => BlogEntity, (blog) => blog.translations, {
+    onDelete: 'CASCADE'
+  })
   @JoinColumn({ name: 'blogId' })
   blog: BlogEntity;
 }

@@ -73,6 +73,10 @@ export class BlogsController {
       throw new NotFoundException('Blog not found');
     }
 
+    if (blog.tags.length === 0) {
+      throw new NotFoundException('Blog has no tags');
+    }
+
     if (blog.translations.length === 0) {
       throw new NotFoundException('Blog has no translation for this language');
     }
