@@ -59,7 +59,9 @@ export class BlogsService {
 
   public async fetchBlogs(
     paginationDto: PaginationDto,
-    lang: LanguagesEnum
+    lang: LanguagesEnum,
+    orderBy = 'created',
+    order: 'ASC' | 'DESC' = 'DESC'
   ): Promise<{ blogs: BlogEntity[]; totalCount: number }> {
     const queryBuilder = this.blogRepository.createQueryBuilder('blog');
 
@@ -67,20 +69,23 @@ export class BlogsService {
     queryBuilder.leftJoinAndSelect('blog.translations', 'translation');
 
     // Join with Tag entity
-    queryBuilder.leftJoinAndSelect('blog.tags', 'tag'); // This line is new
+    queryBuilder.leftJoinAndSelect('blog.tags', 'tag');
 
     // Filter by language
     queryBuilder.where('translation.language = :lang', { lang: lang });
 
     // Apply pagination
     queryBuilder.take(paginationDto.take * paginationDto.page);
+    queryBuilder.addOrderBy(`blog.${orderBy}`, order);
+
+    // Always order tags
+    queryBuilder.addOrderBy('tag.tag', 'ASC');
 
     const totalCount = await queryBuilder.getCount();
     const blogs = await queryBuilder.getMany();
     return { blogs, totalCount };
   }
 
-  //TODO upravit fetchBlog aby vracel tags
   public async fetchBlog(
     uuid: string,
     lang: LanguagesEnum
