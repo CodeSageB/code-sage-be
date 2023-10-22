@@ -3,9 +3,11 @@ import {
   CreateDateColumn,
   Entity,
   Generated,
+  ManyToMany,
   OneToMany,
   PrimaryGeneratedColumn,
-  UpdateDateColumn
+  UpdateDateColumn,
+  JoinTable
 } from 'typeorm';
 import { BlogTranslationEntity } from './BlogTranslation.entity';
 import { TagEntity } from './Tag.entity';
@@ -26,12 +28,14 @@ export class BlogEntity {
   updated: Date;
 
   @OneToMany(() => BlogTranslationEntity, (translation) => translation.blog, {
-    eager: true
+    eager: true,
+    cascade: true
   })
   translations: BlogTranslationEntity[];
 
-  @OneToMany(() => TagEntity, (tag) => tag.blog, {
+  @ManyToMany(() => TagEntity, (tag) => tag.blogs, {
     eager: true
   })
+  @JoinTable()
   tags: TagEntity[];
 }

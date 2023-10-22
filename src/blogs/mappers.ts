@@ -28,7 +28,7 @@ export class Mappers {
     return this.convertCreatedUpdatedDto(blogEntity);
   }
 
-  static createBlogTranslationDtoToBlogTranslationEntity(
+  static toBlogTranslationEntity(
     createTranslationDto: CreateBlogTranslationDto,
     blogEntity: BlogEntity
   ): BlogTranslationEntity {

@@ -1,4 +1,4 @@
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, ManyToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { BlogEntity } from './Blog.entity';
 
 @Entity('Tag')
@@ -6,11 +6,11 @@ export class TagEntity {
   @PrimaryGeneratedColumn({ type: 'bigint' })
   id: number;
 
-  @Column()
+  @Column({
+    unique: true
+  })
   tag: string;
 
-  @ManyToOne(() => BlogEntity, (blog) => blog.tags, {
-    onDelete: 'CASCADE'
-  })
-  blog: BlogEntity;
+  @ManyToMany(() => BlogEntity, (blog) => blog.tags)
+  blogs: BlogEntity[];
 }

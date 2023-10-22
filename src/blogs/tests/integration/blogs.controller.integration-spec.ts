@@ -40,7 +40,7 @@ describe('BlogsController (integration)', () => {
     return tags.map((tag) => {
       const tagEntity = new TagEntity();
       tagEntity.tag = tag;
-      tagEntity.blog = blog;
+      tagEntity.blogs = blog;
       return tagEntity;
     });
   };
@@ -55,11 +55,10 @@ describe('BlogsController (integration)', () => {
     await tagsRepository.save(tags);
 
     for (const translation of blogData.translations) {
-      const blogTranslationEntity =
-        Mappers.createBlogTranslationDtoToBlogTranslationEntity(
-          translation,
-          savedBlogEntity
-        );
+      const blogTranslationEntity = Mappers.toBlogTranslationEntity(
+        translation,
+        savedBlogEntity
+      );
 
       await blogTranslationRepository.save(blogTranslationEntity);
     }

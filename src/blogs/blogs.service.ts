@@ -4,7 +4,7 @@ import { UpdateBlogDto } from './dtos/updateBlog.dto';
 import { PaginationDto } from './dtos/pagination.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { BlogEntity } from './entities/Blog.entity';
-import { DataSource, DeleteResult, Repository } from 'typeorm';
+import { DataSource, DeleteResult, QueryRunner, Repository } from 'typeorm';
 import { Mappers } from './mappers';
 import { LanguagesEnum } from '../shared/enums/languages.enum';
 import { TagEntity } from './entities/Tag.entity';
@@ -25,29 +25,19 @@ export class BlogsService {
 
     try {
       const blogEntity = new BlogEntity();
-      const savedBlogEntity = await queryRunner.manager.save(blogEntity);
 
-      for (const tag of blogData.tags) {
-        const tagEntity = new TagEntity();
-        tagEntity.tag = tag;
-        tagEntity.blog = blogEntity;
-        await queryRunner.manager.save(tagEntity);
-      }
+      blogEntity.translations = blogData.translations.map((translation) =>
+        Mappers.toBlogTranslationEntity(translation, blogEntity)
+      );
 
-      for (const translation of blogData.translations) {
-        const blogTranslationEntity =
-          Mappers.createBlogTranslationDtoToBlogTranslationEntity(
-            translation,
-            savedBlogEntity
-          );
+      blogEntity.tags = await this.handleTags(queryRunner, blogData.tags);
 
-        await queryRunner.manager.save(blogTranslationEntity);
-      }
+      await queryRunner.manager.save(BlogEntity, blogEntity);
 
       await queryRunner.commitTransaction();
 
       return await this.blogRepository.findOneBy({
-        externalId: savedBlogEntity.externalId
+        externalId: blogEntity.externalId
       });
     } catch (err) {
       await queryRunner.rollbackTransaction();
@@ -56,11 +46,9 @@ export class BlogsService {
       await queryRunner.release();
     }
   }
-
   public async fetchBlogs(
     paginationDto: PaginationDto,
     lang: LanguagesEnum,
-    orderBy = 'created',
     order: 'ASC' | 'DESC' = 'DESC'
   ): Promise<{ blogs: BlogEntity[]; totalCount: number }> {
     const queryBuilder = this.blogRepository.createQueryBuilder('blog');
@@ -76,9 +64,9 @@ export class BlogsService {
 
     // Apply pagination
     queryBuilder.take(paginationDto.take * paginationDto.page);
-    queryBuilder.addOrderBy(`blog.${orderBy}`, order);
+    queryBuilder.addOrderBy('blog.created', order);
 
-    // Always order tags
+    // // Always order tags
     queryBuilder.addOrderBy('tag.tag', 'ASC');
 
     const totalCount = await queryBuilder.getCount();
@@ -132,8 +120,10 @@ export class BlogsService {
         for (const tag of blogData.tags) {
           const tagEntity = new TagEntity();
           tagEntity.tag = tag;
-          tagEntity.blog = blogEntity;
-          await queryRunner.manager.save(tagEntity);
+          // TODO - this is not working
+          // tagEntity.blogs = blogEntity;
+
+          // await queryRunner.manager.save(tagEntity);
         }
       }
 
@@ -164,5 +154,24 @@ export class BlogsService {
 
   public deleteBlog(uuid: string): Promise<DeleteResult> {
     return this.blogRepository.delete({ externalId: uuid });
+  }
+
+  private async handleTags(
+    queryRunner: QueryRunner,
+    tagsData: string[]
+  ): Promise<TagEntity[]> {
+    return await Promise.all(
+      tagsData.map(async (tag) => {
+        let tagEntity = await queryRunner.manager.findOneBy(TagEntity, {
+          tag: tag
+        });
+        if (!tagEntity) {
+          tagEntity = new TagEntity();
+          tagEntity.tag = tag;
+          await queryRunner.manager.save(TagEntity, tagEntity);
+        }
+        return tagEntity;
+      })
+    );
   }
 }
