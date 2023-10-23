@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException
+} from '@nestjs/common';
 import { CreateBlogDto } from './dtos/createBlog.dto';
 import { UpdateBlogDto } from './dtos/updateBlog.dto';
 import { PaginationDto } from './dtos/pagination.dto';
@@ -8,12 +12,17 @@ import { DataSource, DeleteResult, QueryRunner, Repository } from 'typeorm';
 import { Mappers } from './mappers';
 import { LanguagesEnum } from '../shared/enums/languages.enum';
 import { TagEntity } from './entities/Tag.entity';
+import { BlogTranslationEntity } from './entities/BlogTranslation.entity';
 
 @Injectable()
 export class BlogsService {
   constructor(
     @InjectRepository(BlogEntity)
     private readonly blogRepository: Repository<BlogEntity>,
+    @InjectRepository(BlogTranslationEntity)
+    private readonly blogTranslationRepository: Repository<BlogTranslationEntity>,
+    @InjectRepository(TagEntity)
+    private readonly tagRepository: Repository<TagEntity>,
     private dataSource: DataSource
   ) {}
 
@@ -51,49 +60,78 @@ export class BlogsService {
     lang: LanguagesEnum,
     order: 'ASC' | 'DESC' = 'DESC'
   ): Promise<{ blogs: BlogEntity[]; totalCount: number }> {
-    const queryBuilder = this.blogRepository.createQueryBuilder('blog');
+    const queryBuilder = this.blogRepository
+      .createQueryBuilder('blog')
+      .leftJoinAndSelect(
+        'blog.translations',
+        'translation',
+        'translation.language = :lang',
+        { lang }
+      )
+      .orderBy('blog.created', order)
+      .take(paginationDto.take * paginationDto.page);
 
-    // Join with BlogTranslation entity
-    queryBuilder.leftJoinAndSelect('blog.translations', 'translation');
+    const [blogs, totalCount] = await queryBuilder.getManyAndCount();
 
-    // Join with Tag entity
-    queryBuilder.leftJoinAndSelect('blog.tags', 'tag');
+    const blogsWithTags = await Promise.all(
+      blogs.map(async (blog) => {
+        blog.tags = await this.fetchTags(blog);
+        return blog;
+      })
+    );
 
-    // Filter by language
-    queryBuilder.where('translation.language = :lang', { lang: lang });
-
-    // Apply pagination
-    queryBuilder.take(paginationDto.take * paginationDto.page);
-    queryBuilder.addOrderBy('blog.created', order);
-
-    // // Always order tags
-    queryBuilder.addOrderBy('tag.tag', 'ASC');
-
-    const totalCount = await queryBuilder.getCount();
-    const blogs = await queryBuilder.getMany();
-    return { blogs, totalCount };
+    return { blogs: blogsWithTags, totalCount };
   }
 
   public async fetchBlog(
     uuid: string,
     lang: LanguagesEnum
   ): Promise<BlogEntity | null> {
-    const queryBuilder = this.blogRepository.createQueryBuilder('blog');
+    const blog = await this.blogRepository
+      .createQueryBuilder('blog')
+      .where('blog.externalId = :uuid', { uuid })
+      .getOne();
 
-    // Join with BlogTranslation entity
-    queryBuilder.leftJoinAndSelect(
-      'blog.translations',
-      'translation',
-      'translation.language = :lang',
-      { lang: lang }
-    );
+    if (!blog) return null;
 
-    queryBuilder.leftJoinAndSelect('blog.tags', 'tag');
+    const [translations, tags] = await Promise.all([
+      this.fetchTranslations(blog, lang),
+      this.fetchTags(blog)
+    ]);
 
-    // Filter by externalId
-    queryBuilder.where('blog.externalId = :uuid', { uuid });
+    blog.translations = translations;
+    blog.tags = tags;
 
-    return await queryBuilder.getOne();
+    return blog;
+  }
+
+  private async fetchTranslations(
+    blog: BlogEntity,
+    lang: LanguagesEnum
+  ): Promise<BlogTranslationEntity[]> {
+    try {
+      return await this.blogTranslationRepository
+        .createQueryBuilder('translation')
+        .where('translation.blogId = :blogId', { blogId: blog.id })
+        .andWhere('translation.language = :lang', { lang })
+        .getMany();
+    } catch (error) {
+      throw new InternalServerErrorException('Error fetching translations');
+    }
+  }
+
+  private async fetchTags(blog: BlogEntity): Promise<TagEntity[]> {
+    try {
+      return await this.tagRepository
+        .createQueryBuilder('tag')
+        .innerJoin('tag.blogs', 'blog', 'blog.id = :blogId', {
+          blogId: blog.id
+        })
+        .orderBy('tag.tag', 'ASC')
+        .getMany();
+    } catch (error) {
+      throw new InternalServerErrorException('Error fetching tags');
+    }
   }
 
   public async updateBlog(
