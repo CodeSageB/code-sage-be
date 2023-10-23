@@ -6,7 +6,7 @@ import { LanguagesEnum } from '../shared/enums/languages.enum';
 import { UpdateBlogTranslationDto } from './dtos/updateBlogTranslation.dto';
 
 export class Mappers {
-  static blogEntityToBlogDto(
+  static mapToBlogDto(
     blogEntity: BlogEntity,
     language: LanguagesEnum
   ): BlogDto {
@@ -20,15 +20,15 @@ export class Mappers {
     };
   }
 
-  static blogEntityToCreatedBlogDto(blogEntity: BlogEntity): CreatedBlogDto {
+  static mapToCreatedBlogDto(blogEntity: BlogEntity): CreatedBlogDto {
     return this.convertCreatedUpdatedDto(blogEntity);
   }
 
-  static blogEntityToUpdatedBlogDto(blogEntity: BlogEntity): UpdatedBlogDto {
+  static mapToUpdatedBlogDto(blogEntity: BlogEntity): UpdatedBlogDto {
     return this.convertCreatedUpdatedDto(blogEntity);
   }
 
-  static toBlogTranslationEntity(
+  static createTranslationEntity(
     createTranslationDto: CreateBlogTranslationDto,
     blogEntity: BlogEntity
   ): BlogTranslationEntity {
@@ -42,7 +42,7 @@ export class Mappers {
     return blogTranslation;
   }
 
-  static updateBlogTranslationDtoToBlogTranslationEntity(
+  static updateTranslationEntity(
     updateTranslationDto: UpdateBlogTranslationDto,
     blogEntity: BlogEntity
   ): BlogTranslationEntity {

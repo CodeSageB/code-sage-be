@@ -41,7 +41,7 @@ export class BlogsController {
       throw new BadRequestException('Bad request');
     }
 
-    return Mappers.blogEntityToCreatedBlogDto(blog);
+    return Mappers.mapToCreatedBlogDto(blog);
   }
 
   @Post('all')
@@ -55,9 +55,7 @@ export class BlogsController {
 
     return {
       totalCount: blogList.totalCount,
-      blogs: blogList.blogs.map((b) =>
-        Mappers.blogEntityToBlogDto(b, lang.lang)
-      )
+      blogs: blogList.blogs.map((b) => Mappers.mapToBlogDto(b, lang.lang))
     };
   }
 
@@ -81,7 +79,7 @@ export class BlogsController {
       throw new NotFoundException('Blog has no translation for this language');
     }
 
-    return Mappers.blogEntityToBlogDto(blog, lang.lang);
+    return Mappers.mapToBlogDto(blog, lang.lang);
   }
 
   @Put(':id')
@@ -95,7 +93,7 @@ export class BlogsController {
       throw new NotFoundException('Blog not found');
     }
 
-    return Mappers.blogEntityToUpdatedBlogDto(blog);
+    return Mappers.mapToUpdatedBlogDto(blog);
   }
 
   @Delete(':id')

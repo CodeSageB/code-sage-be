@@ -55,7 +55,7 @@ describe('BlogsController (integration)', () => {
     await tagsRepository.save(tags);
 
     for (const translation of blogData.translations) {
-      const blogTranslationEntity = Mappers.toBlogTranslationEntity(
+      const blogTranslationEntity = Mappers.createTranslationEntity(
         translation,
         savedBlogEntity
       );

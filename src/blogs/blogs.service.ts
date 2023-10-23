@@ -27,7 +27,7 @@ export class BlogsService {
       const blogEntity = new BlogEntity();
 
       blogEntity.translations = blogData.translations.map((translation) =>
-        Mappers.toBlogTranslationEntity(translation, blogEntity)
+        Mappers.createTranslationEntity(translation, blogEntity)
       );
 
       blogEntity.tags = await this.handleTags(queryRunner, blogData.tags);
@@ -114,36 +114,25 @@ export class BlogsService {
     await queryRunner.startTransaction();
 
     try {
-      await queryRunner.manager.save(blogEntity);
-
       if (blogData.tags) {
-        for (const tag of blogData.tags) {
-          const tagEntity = new TagEntity();
-          tagEntity.tag = tag;
-          // TODO - this is not working
-          // tagEntity.blogs = blogEntity;
-
-          // await queryRunner.manager.save(tagEntity);
-        }
+        blogEntity.tags = await this.handleTags(queryRunner, blogData.tags);
       }
 
-      // Update translations
       if (blogData.translations) {
-        for (const translationData of blogData.translations) {
-          await queryRunner.manager.save(
-            Mappers.updateBlogTranslationDtoToBlogTranslationEntity(
-              translationData,
-              blogEntity
-            )
-          );
-        }
+        const updatedTranslations = blogData.translations.map((translation) =>
+          Mappers.updateTranslationEntity(translation, blogEntity)
+        );
+
+        blogEntity.translations = [
+          ...blogEntity.translations,
+          ...updatedTranslations
+        ];
       }
+
+      await queryRunner.manager.save(BlogEntity, blogEntity);
       await queryRunner.commitTransaction();
 
-      //Refresh the entity
-      return await this.blogRepository.findOneBy({
-        externalId: uuid
-      });
+      return await this.blogRepository.findOne({ where: { externalId: uuid } });
     } catch (err) {
       await queryRunner.rollbackTransaction();
       throw err;
@@ -151,7 +140,6 @@ export class BlogsService {
       await queryRunner.release();
     }
   }
-
   public deleteBlog(uuid: string): Promise<DeleteResult> {
     return this.blogRepository.delete({ externalId: uuid });
   }
