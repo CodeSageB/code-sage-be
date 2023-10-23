@@ -55,6 +55,52 @@ export class BlogsService {
       await queryRunner.release();
     }
   }
+
+  public async updateBlog(
+    uuid: string,
+    blogData: UpdateBlogDto
+  ): Promise<BlogEntity> {
+    const blogEntity = await this.blogRepository.findOne({
+      where: { externalId: uuid }
+    });
+
+    if (!blogEntity) {
+      throw new NotFoundException('Blog not found');
+    }
+
+    const queryRunner = this.dataSource.createQueryRunner();
+
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      if (blogData.tags) {
+        blogEntity.tags = await this.handleTags(queryRunner, blogData.tags);
+      }
+
+      if (blogData.translations) {
+        const updatedTranslations = blogData.translations.map((translation) =>
+          Mappers.updateTranslationEntity(translation, blogEntity)
+        );
+
+        blogEntity.translations = [
+          ...blogEntity.translations,
+          ...updatedTranslations
+        ];
+      }
+
+      await queryRunner.manager.save(BlogEntity, blogEntity);
+      await queryRunner.commitTransaction();
+
+      return await this.blogRepository.findOne({ where: { externalId: uuid } });
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      throw err;
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
   public async fetchBlogs(
     paginationDto: PaginationDto,
     lang: LanguagesEnum,
@@ -104,6 +150,28 @@ export class BlogsService {
 
     return blog;
   }
+  public deleteBlog(uuid: string): Promise<DeleteResult> {
+    return this.blogRepository.delete({ externalId: uuid });
+  }
+
+  private async handleTags(
+    queryRunner: QueryRunner,
+    tagsData: string[]
+  ): Promise<TagEntity[]> {
+    return await Promise.all(
+      tagsData.map(async (tag) => {
+        let tagEntity = await queryRunner.manager.findOneBy(TagEntity, {
+          tag: tag
+        });
+        if (!tagEntity) {
+          tagEntity = new TagEntity();
+          tagEntity.tag = tag;
+          await queryRunner.manager.save(TagEntity, tagEntity);
+        }
+        return tagEntity;
+      })
+    );
+  }
 
   private async fetchTranslations(
     blog: BlogEntity,
@@ -132,72 +200,5 @@ export class BlogsService {
     } catch (error) {
       throw new InternalServerErrorException('Error fetching tags');
     }
-  }
-
-  public async updateBlog(
-    uuid: string,
-    blogData: UpdateBlogDto
-  ): Promise<BlogEntity> {
-    const blogEntity = await this.blogRepository.findOne({
-      where: { externalId: uuid }
-    });
-
-    if (!blogEntity) {
-      throw new NotFoundException('Blog not found');
-    }
-
-    const queryRunner = this.dataSource.createQueryRunner();
-
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-
-    try {
-      if (blogData.tags) {
-        blogEntity.tags = await this.handleTags(queryRunner, blogData.tags);
-      }
-
-      if (blogData.translations) {
-        const updatedTranslations = blogData.translations.map((translation) =>
-          Mappers.updateTranslationEntity(translation, blogEntity)
-        );
-
-        blogEntity.translations = [
-          ...blogEntity.translations,
-          ...updatedTranslations
-        ];
-      }
-
-      await queryRunner.manager.save(BlogEntity, blogEntity);
-      await queryRunner.commitTransaction();
-
-      return await this.blogRepository.findOne({ where: { externalId: uuid } });
-    } catch (err) {
-      await queryRunner.rollbackTransaction();
-      throw err;
-    } finally {
-      await queryRunner.release();
-    }
-  }
-  public deleteBlog(uuid: string): Promise<DeleteResult> {
-    return this.blogRepository.delete({ externalId: uuid });
-  }
-
-  private async handleTags(
-    queryRunner: QueryRunner,
-    tagsData: string[]
-  ): Promise<TagEntity[]> {
-    return await Promise.all(
-      tagsData.map(async (tag) => {
-        let tagEntity = await queryRunner.manager.findOneBy(TagEntity, {
-          tag: tag
-        });
-        if (!tagEntity) {
-          tagEntity = new TagEntity();
-          tagEntity.tag = tag;
-          await queryRunner.manager.save(TagEntity, tagEntity);
-        }
-        return tagEntity;
-      })
-    );
   }
 }
