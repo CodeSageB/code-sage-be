@@ -12,17 +12,18 @@ import { CreateBlogDto } from '../../dtos/createBlog.dto';
 import { UpdateBlogDto } from '../../dtos/updateBlog.dto';
 import { PaginationDto } from '../../dtos/pagination.dto';
 import {
-  blogTestArray,
   blogTest,
   blogTest2,
-  blogTestWithEnTranslation,
-  blogTestWithCsTranslation
+  blogTestArray,
+  blogTestWithCsTranslation,
+  blogTestWithEnTranslation
 } from '../../../shared/test/blog-test-data';
 import { LanguagesEnum } from '../../../shared/enums/languages.enum';
 import { BlogList, BlogTranslationDto } from '../../dtos/blog.dto';
 import { BlogTranslationEntity } from '../../entities/BlogTranslation.entity';
 import { Mappers } from '../../mappers';
 import { TagEntity } from '../../entities/Tag.entity';
+
 describe('BlogsController (integration)', () => {
   let app: INestApplication;
   let pgContainer: StartedTestContainer;
@@ -36,13 +37,20 @@ describe('BlogsController (integration)', () => {
     }
   };
 
-  const prepareTags = function (blog: BlogEntity, tags: string[]): TagEntity[] {
-    return tags.map((tag) => {
-      const tagEntity = new TagEntity();
-      tagEntity.tag = tag;
-      tagEntity.blogs = blog;
-      return tagEntity;
-    });
+  const handleTags = async function (tagsData: string[]): Promise<TagEntity[]> {
+    return await Promise.all(
+      tagsData.map(async (tag) => {
+        let tagEntity = await tagsRepository.findOneBy({
+          tag: tag
+        });
+        if (!tagEntity) {
+          tagEntity = new TagEntity();
+          tagEntity.tag = tag;
+          await tagsRepository.save(tagEntity);
+        }
+        return tagEntity;
+      })
+    );
   };
 
   const createBlog = async function (
@@ -51,17 +59,12 @@ describe('BlogsController (integration)', () => {
     const blogEntity = new BlogEntity();
     const savedBlogEntity = await blogRepository.save(blogEntity);
 
-    const tags = prepareTags(savedBlogEntity, blogData.tags);
-    await tagsRepository.save(tags);
+    savedBlogEntity.tags = await handleTags(blogData.tags);
+    savedBlogEntity.translations = blogData.translations.map((translation) =>
+      Mappers.createTranslationEntity(translation, savedBlogEntity)
+    );
 
-    for (const translation of blogData.translations) {
-      const blogTranslationEntity = Mappers.createTranslationEntity(
-        translation,
-        savedBlogEntity
-      );
-
-      await blogTranslationRepository.save(blogTranslationEntity);
-    }
+    await blogRepository.save(savedBlogEntity);
 
     return await blogRepository.findOneBy({
       externalId: savedBlogEntity.externalId
@@ -110,6 +113,8 @@ describe('BlogsController (integration)', () => {
     await pgContainer.stop();
     await app.close();
   });
+
+  //TODO More tests for tags
 
   describe('POST /blogs', () => {
     it('should create a new blog', async () => {
@@ -199,7 +204,6 @@ describe('BlogsController (integration)', () => {
     it('should return 10 blogs by default', async () => {
       // Arrange
       await seedDatabase(blogTestArray);
-
       // Act
       const response = await request(app.getHttpServer()).post(
         '/blogs/all?lang=cs'
@@ -210,7 +214,7 @@ describe('BlogsController (integration)', () => {
       // Assert
       expect(response.status).toBe(HttpStatus.OK);
       expect(blogList.blogs.length).toBe(10);
-    });
+    }, 10000); // TODO 10 seconds timeout, is it okay?
 
     it('should return blogs according to pagination', async () => {
       // Arrange
@@ -231,7 +235,7 @@ describe('BlogsController (integration)', () => {
       // Assert
       expect(response.status).toBe(HttpStatus.OK);
       expect(blogList.blogs.length).toBe(pagination.take);
-    });
+    }, 10000);
 
     it('should return blogs according to pagination on another page', async () => {
       // Arrange
@@ -252,7 +256,7 @@ describe('BlogsController (integration)', () => {
       // Assert
       expect(response.status).toBe(HttpStatus.OK);
       expect(blogList.blogs.length).toBe(pagination.take * pagination.page);
-    });
+    }, 10000);
 
     it('should return empty array if no blogs', async () => {
       // Act
@@ -265,7 +269,7 @@ describe('BlogsController (integration)', () => {
       // Assert
       expect(response.status).toBe(HttpStatus.OK);
       expect(blogList.blogs.length).toBe(0);
-    });
+    }, 10000);
   });
 
   describe('GET /blogs/:id', () => {
