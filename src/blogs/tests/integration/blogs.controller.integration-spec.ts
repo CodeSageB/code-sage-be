@@ -57,17 +57,16 @@ describe('BlogsController (integration)', () => {
     blogData: CreateBlogDto
   ): Promise<BlogEntity> {
     const blogEntity = new BlogEntity();
-    const savedBlogEntity = await blogRepository.save(blogEntity);
 
-    savedBlogEntity.tags = await handleTags(blogData.tags);
-    savedBlogEntity.translations = blogData.translations.map((translation) =>
-      Mappers.createTranslationEntity(translation, savedBlogEntity)
+    blogEntity.tags = await handleTags(blogData.tags);
+    blogEntity.translations = blogData.translations.map((translation) =>
+      Mappers.createTranslationEntity(translation, blogEntity)
     );
 
-    await blogRepository.save(savedBlogEntity);
+    const savedEntity = await blogRepository.save(blogEntity);
 
     return await blogRepository.findOneBy({
-      externalId: savedBlogEntity.externalId
+      externalId: savedEntity.externalId
     });
   };
 
@@ -114,8 +113,6 @@ describe('BlogsController (integration)', () => {
     await pgContainer.stop();
     await app.close();
   });
-
-  //TODO More tests for tags
 
   describe('POST /blogs', () => {
     it('should create a new blog', async () => {
@@ -234,12 +231,27 @@ describe('BlogsController (integration)', () => {
   });
 
   describe('POST /blogs/all', () => {
-    it('should return 10 blogs by default', async () => {
+    it('should return 10 czech blogs by default', async () => {
       // Arrange
       await seedDatabase(blogTestArray);
       // Act
       const response = await request(app.getHttpServer()).post(
         '/blogs/all?lang=cs'
+      );
+
+      const blogList = response.body as BlogList;
+
+      // Assert
+      expect(response.status).toBe(HttpStatus.OK);
+      expect(blogList.blogs.length).toBe(10);
+    });
+
+    it('should return 10 english blogs by default', async () => {
+      // Arrange
+      await seedDatabase(blogTestArray);
+      // Act
+      const response = await request(app.getHttpServer()).post(
+        '/blogs/all?lang=en'
       );
 
       const blogList = response.body as BlogList;

@@ -10,11 +10,10 @@ export class Mappers {
     blogEntity: BlogEntity,
     language: LanguagesEnum
   ): BlogDto {
-    //TODO could be better reading for title and content
     return {
       id: blogEntity.externalId,
-      title: blogEntity.translations[0]?.title,
-      content: blogEntity.translations[0]?.content,
+      title: blogEntity.translations[0].title,
+      content: blogEntity.translations[0].content,
       tags: blogEntity.tags.map((tag) => tag.tag),
       created: blogEntity.created,
       language
