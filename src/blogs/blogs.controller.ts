@@ -19,7 +19,12 @@ import { BlogsService } from './blogs.service';
 import { UpdateBlogDto } from './dtos/updateBlog.dto';
 import { PaginationDto } from './dtos/pagination.dto';
 import { Mappers } from './mappers';
-import { CreatedBlogDto, BlogDto, UpdatedBlogDto } from './dtos/blog.dto';
+import {
+  CreatedBlogDto,
+  BlogDto,
+  UpdatedBlogDto,
+  BlogList
+} from './dtos/blog.dto';
 import { LanguageDto } from '../shared/dtos/language.dto';
 
 @Controller('blogs')
@@ -36,19 +41,22 @@ export class BlogsController {
       throw new BadRequestException('Bad request');
     }
 
-    return Mappers.blogEntityToCreatedBlogDto(blog);
+    return Mappers.mapToCreatedBlogDto(blog);
   }
 
   @Post('all')
   @UsePipes(new ValidationPipe({ transform: true }))
   @HttpCode(200)
   async getBlogs(
-    @Body() paginationDto: PaginationDto,
+    @Body() pagination: PaginationDto,
     @Query() lang: LanguageDto
-  ): Promise<BlogDto[]> {
-    const blogs = await this.blogService.fetchBlogs(paginationDto, lang.lang);
+  ): Promise<BlogList> {
+    const blogList = await this.blogService.fetchBlogs(pagination, lang.lang);
 
-    return blogs.map((blog) => Mappers.blogEntityToBlogDto(blog, lang.lang));
+    return {
+      totalCount: blogList.totalCount,
+      blogs: blogList.blogs.map((b) => Mappers.mapToBlogDto(b, lang.lang))
+    };
   }
 
   @Get(':id')
@@ -63,11 +71,15 @@ export class BlogsController {
       throw new NotFoundException('Blog not found');
     }
 
+    if (blog.tags.length === 0) {
+      throw new NotFoundException('Blog has no tags');
+    }
+
     if (blog.translations.length === 0) {
       throw new NotFoundException('Blog has no translation for this language');
     }
 
-    return Mappers.blogEntityToBlogDto(blog, lang.lang);
+    return Mappers.mapToBlogDto(blog, lang.lang);
   }
 
   @Put(':id')
@@ -81,7 +93,7 @@ export class BlogsController {
       throw new NotFoundException('Blog not found');
     }
 
-    return Mappers.blogEntityToUpdatedBlogDto(blog);
+    return Mappers.mapToUpdatedBlogDto(blog);
   }
 
   @Delete(':id')

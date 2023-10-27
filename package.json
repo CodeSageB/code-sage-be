@@ -11,7 +11,7 @@
     "typeorm": "ts-node --require tsconfig-paths/register ./node_modules/typeorm/cli",
     "migration:run": "npm run typeorm migration:run -- -d ./db/typeorm.config.ts",
     "migration:generate": "npm run typeorm -- -d ./db/typeorm.config.ts migration:generate ./db/migrations/%npm_config_name%",
-    "migration:create": "npm run typeorm -- migration:create ./db/migrations/$npm_config_name",
+    "migration:create": "npm run typeorm -- migration:create ./db/migrations/%npm_config_name%",
     "migration:revert": "npm run typeorm -- -d ./db/typeorm.config.ts migration:revert",
     "migration:show": "npm run typeorm -- migration:show -d ./db/typeorm.config.ts",
     "start": "nest start",
@@ -42,7 +42,8 @@
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.8.1",
     "testcontainers": "^10.2.1",
-    "typeorm": "^0.3.17"
+    "typeorm": "^0.3.17",
+    "uuid": "^9.0.1"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.0.0",
@@ -52,6 +53,7 @@
     "@types/jest": "^29.5.2",
     "@types/node": "^20.3.1",
     "@types/supertest": "^2.0.12",
+    "@types/uuid": "^9.0.5",
     "@typescript-eslint/eslint-plugin": "^5.59.11",
     "@typescript-eslint/parser": "^5.59.11",
     "eslint": "^8.42.0",

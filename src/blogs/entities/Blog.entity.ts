@@ -3,11 +3,14 @@ import {
   CreateDateColumn,
   Entity,
   Generated,
+  ManyToMany,
   OneToMany,
   PrimaryGeneratedColumn,
-  UpdateDateColumn
+  UpdateDateColumn,
+  JoinTable
 } from 'typeorm';
 import { BlogTranslationEntity } from './BlogTranslation.entity';
+import { TagEntity } from './Tag.entity';
 
 @Entity('Blog')
 export class BlogEntity {
@@ -18,9 +21,6 @@ export class BlogEntity {
   @Generated('uuid')
   externalId: string;
 
-  @Column('text', { array: true })
-  tags: string[];
-
   @CreateDateColumn({ type: 'timestamptz' })
   created: Date;
 
@@ -28,7 +28,14 @@ export class BlogEntity {
   updated: Date;
 
   @OneToMany(() => BlogTranslationEntity, (translation) => translation.blog, {
-    eager: true
+    eager: true,
+    cascade: true
   })
   translations: BlogTranslationEntity[];
+
+  @ManyToMany(() => TagEntity, (tag) => tag.blogs, {
+    eager: true
+  })
+  @JoinTable()
+  tags: TagEntity[];
 }

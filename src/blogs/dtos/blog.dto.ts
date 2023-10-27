@@ -7,6 +7,11 @@ export class BlogDto {
   created: Date;
 }
 
+export class BlogList {
+  totalCount: number;
+  blogs: BlogDto[];
+}
+
 export class BlogTranslationDto {
   title: string;
   content: string;

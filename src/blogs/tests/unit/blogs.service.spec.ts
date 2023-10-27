@@ -4,6 +4,7 @@ import { DataSource, Repository } from 'typeorm';
 import { BlogEntity } from '../../entities/Blog.entity';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { BlogTranslationEntity } from '../../entities/BlogTranslation.entity';
+import { TagEntity } from '../../entities/Tag.entity';
 
 describe('BlogsService', () => {
   let service: BlogsService;
@@ -18,6 +19,10 @@ describe('BlogsService', () => {
         },
         {
           provide: getRepositoryToken(BlogTranslationEntity),
+          useClass: Repository
+        },
+        {
+          provide: getRepositoryToken(TagEntity),
           useClass: Repository
         },
         {
