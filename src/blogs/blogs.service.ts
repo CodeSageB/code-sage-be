@@ -108,7 +108,7 @@ export class BlogsService {
   ): Promise<{ blogs: BlogEntity[]; totalCount: number }> {
     const queryBuilder = this.blogRepository
       .createQueryBuilder('blog')
-      .leftJoinAndSelect(
+      .innerJoinAndSelect(
         'blog.translations',
         'translation',
         'translation.language = :lang',
