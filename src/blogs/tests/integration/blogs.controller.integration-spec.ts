@@ -107,6 +107,7 @@ describe('BlogsController (integration)', () => {
   afterEach(async () => {
     await blogTranslationRepository.delete({});
     await blogRepository.delete({});
+    await tagsRepository.delete({});
   });
 
   afterAll(async () => {
@@ -164,6 +165,33 @@ describe('BlogsController (integration)', () => {
       expect(response.status).toBe(HttpStatus.BAD_REQUEST);
     });
 
+    it('should return 400 when tags is not array', async () => {
+        // Arrange
+        const createBlogDto: CreateBlogDto = { ...blogTest, tags: 'invalid-tags' as any };
+
+        // Act
+        const response = await request(app.getHttpServer())
+            .post('/blogs')
+            .send(createBlogDto);
+
+        // Assert
+        expect(response.status).toBe(HttpStatus.BAD_REQUEST);
+    }
+    );
+
+    it('should return 400 when tags is not array of strings', async () => {
+        // Arrange
+        const createBlogDto: CreateBlogDto = { ...blogTest, tags: [1, 2, 3] as any };
+
+        // Act
+        const response = await request(app.getHttpServer())
+            .post('/blogs')
+            .send(createBlogDto);
+
+        // Assert
+        expect(response.status).toBe(HttpStatus.BAD_REQUEST);
+    });
+
     it('should return 400 when translations is empty', async () => {
       // Arrange
       const createBlogDto: CreateBlogDto = { ...blogTest, translations: [] };
@@ -214,7 +242,7 @@ describe('BlogsController (integration)', () => {
       // Assert
       expect(response.status).toBe(HttpStatus.OK);
       expect(blogList.blogs.length).toBe(10);
-    }, 10000); // TODO 10 seconds timeout, is it okay?
+    });
 
     it('should return blogs according to pagination', async () => {
       // Arrange
@@ -235,7 +263,7 @@ describe('BlogsController (integration)', () => {
       // Assert
       expect(response.status).toBe(HttpStatus.OK);
       expect(blogList.blogs.length).toBe(pagination.take);
-    }, 10000);
+    });
 
     it('should return blogs according to pagination on another page', async () => {
       // Arrange
@@ -256,7 +284,7 @@ describe('BlogsController (integration)', () => {
       // Assert
       expect(response.status).toBe(HttpStatus.OK);
       expect(blogList.blogs.length).toBe(pagination.take * pagination.page);
-    }, 10000);
+    });
 
     it('should return empty array if no blogs', async () => {
       // Act
