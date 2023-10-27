@@ -166,30 +166,35 @@ describe('BlogsController (integration)', () => {
     });
 
     it('should return 400 when tags is not array', async () => {
-        // Arrange
-        const createBlogDto: CreateBlogDto = { ...blogTest, tags: 'invalid-tags' as any };
+      // Arrange
+      const createBlogDto: CreateBlogDto = {
+        ...blogTest,
+        tags: 'invalid-tags' as any
+      };
 
-        // Act
-        const response = await request(app.getHttpServer())
-            .post('/blogs')
-            .send(createBlogDto);
+      // Act
+      const response = await request(app.getHttpServer())
+        .post('/blogs')
+        .send(createBlogDto);
 
-        // Assert
-        expect(response.status).toBe(HttpStatus.BAD_REQUEST);
-    }
-    );
+      // Assert
+      expect(response.status).toBe(HttpStatus.BAD_REQUEST);
+    });
 
     it('should return 400 when tags is not array of strings', async () => {
-        // Arrange
-        const createBlogDto: CreateBlogDto = { ...blogTest, tags: [1, 2, 3] as any };
+      // Arrange
+      const createBlogDto: CreateBlogDto = {
+        ...blogTest,
+        tags: [1, 2, 3] as any
+      };
 
-        // Act
-        const response = await request(app.getHttpServer())
-            .post('/blogs')
-            .send(createBlogDto);
+      // Act
+      const response = await request(app.getHttpServer())
+        .post('/blogs')
+        .send(createBlogDto);
 
-        // Assert
-        expect(response.status).toBe(HttpStatus.BAD_REQUEST);
+      // Assert
+      expect(response.status).toBe(HttpStatus.BAD_REQUEST);
     });
 
     it('should return 400 when translations is empty', async () => {
