@@ -4,6 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { LoggerMiddleware } from './middleware/logger.middleware';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AppConfig, DatabaseConfig } from './config';
+import { HealthModule } from './health/health.module';
 
 @Module({
   imports: [
@@ -19,7 +20,8 @@ import { AppConfig, DatabaseConfig } from './config';
       }),
       inject: [ConfigService]
     }),
-    BlogsModule
+    BlogsModule,
+    HealthModule
   ],
   controllers: [],
   providers: []
