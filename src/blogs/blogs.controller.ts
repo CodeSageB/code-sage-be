@@ -82,6 +82,28 @@ export class BlogsController {
     return Mappers.mapToBlogDto(blog, lang.lang);
   }
 
+  @Get('translation-all/:id')
+  @UsePipes(new ValidationPipe({ transform: true }))
+  async getBlogForUpdate(
+    @Param('id', ParseUUIDPipe) id: string
+  ): Promise<UpdatedBlogDto> {
+    const blog = await this.blogService.fetchBlog(id);
+
+    if (!blog) {
+      throw new NotFoundException('Blog not found');
+    }
+
+    if (blog.tags.length === 0) {
+      throw new NotFoundException('Blog has no tags');
+    }
+
+    if (blog.translations.length === 0) {
+      throw new NotFoundException('Blog has no translation for this language');
+    }
+
+    return Mappers.mapToUpdatedBlogDto(blog);
+  }
+
   @Put(':id')
   async updateBlog(
     @Param('id', ParseUUIDPipe) id: string,

@@ -131,7 +131,7 @@ export class BlogsService {
 
   public async fetchBlog(
     uuid: string,
-    lang: LanguagesEnum
+    lang?: LanguagesEnum
   ): Promise<BlogEntity | null> {
     const blog = await this.blogRepository
       .createQueryBuilder('blog')
@@ -175,14 +175,18 @@ export class BlogsService {
 
   private async fetchTranslations(
     blog: BlogEntity,
-    lang: LanguagesEnum
+    lang?: LanguagesEnum
   ): Promise<BlogTranslationEntity[]> {
     try {
-      return await this.blogTranslationRepository
+      const query = this.blogTranslationRepository
         .createQueryBuilder('translation')
-        .where('translation.blogId = :blogId', { blogId: blog.id })
-        .andWhere('translation.language = :lang', { lang })
-        .getMany();
+        .where('translation.blogId = :blogId', { blogId: blog.id });
+
+      if (lang) {
+        query.andWhere('translation.language = :lang', { lang });
+      }
+
+      return query.getMany();
     } catch (error) {
       throw new InternalServerErrorException('Error fetching translations');
     }
